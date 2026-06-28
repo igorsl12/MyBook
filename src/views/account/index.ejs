@@ -1,0 +1,43 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<div class="account-layout">
+  <%- include('_nav') %>
+
+  <div class="account-main">
+    <h1>Olá, <%= perfil.nome || usuario.email.split('@')[0] %>!</h1>
+
+    <div class="account-cards">
+      <a class="card stat-card" href="/minha-conta/pedidos">
+        <span class="stat-num"><%= totalPedidos %></span>
+        <span class="muted">pedido<%= totalPedidos === 1 ? '' : 's' %></span>
+      </a>
+      <a class="card stat-card" href="/favoritos">
+        <span class="stat-num">♥</span>
+        <span class="muted">favoritos</span>
+      </a>
+      <a class="card stat-card" href="/minha-conta/enderecos">
+        <span class="stat-num">⌂</span>
+        <span class="muted">endereços</span>
+      </a>
+    </div>
+
+    <% if (pendentes.length) { %>
+      <div class="alert alert-aviso">
+        Você tem <%= pendentes.length %> livro<%= pendentes.length === 1 ? '' : 's' %> para avaliar:
+        <% pendentes.forEach(function(l, i){ %><a href="/livro/<%= l.slug %>"><%= l.titulo %></a><%= i < pendentes.length - 1 ? ', ' : '' %><% }) %>.
+      </div>
+    <% } %>
+
+    <section class="section">
+      <div class="section-head"><h2>Pedidos recentes</h2><a href="/minha-conta/pedidos">Ver todos →</a></div>
+      <% if (pedidos.length === 0) { %>
+        <div class="state"><p>Você ainda não fez nenhum pedido.</p><a class="btn btn-primary" href="/catalogo">Começar a comprar</a></div>
+      <% } else { %>
+        <%- include('_orders-table', { pedidos }) %>
+      <% } %>
+    </section>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

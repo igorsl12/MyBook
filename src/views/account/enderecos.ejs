@@ -1,0 +1,46 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<div class="account-layout">
+  <%- include('_nav') %>
+  <div class="account-main">
+    <h1>Meus endereços</h1>
+
+    <% if (enderecos.length === 0) { %>
+      <p class="muted">Você ainda não tem endereços salvos.</p>
+    <% } else { %>
+      <div class="address-grid">
+        <% enderecos.forEach(function(e){ %>
+          <div class="card address-card">
+            <% if (e.padrao) { %><span class="badge badge-info">Padrão</span><% } %>
+            <p><strong><%= e.logradouro %>, <%= e.numero %></strong><% if (e.complemento) { %> — <%= e.complemento %><% } %><br>
+            <span class="muted"><%= e.bairro %>, <%= e.cidade %>/<%= e.uf %> · CEP <%= e.cep %></span></p>
+            <form action="/minha-conta/enderecos/<%= e.id %>/remover" method="post">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-ghost" type="submit">Remover</button>
+            </form>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <section class="card" style="margin-top:1.5rem">
+      <h2>Adicionar endereço</h2>
+      <form action="/minha-conta/enderecos" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-grid">
+          <div class="form-group"><label>CEP</label><input class="form-control" name="cep" aria-label="CEP" data-cep value="<%= valores.cep || '' %>" placeholder="00000-000"><% if (erros.cep) { %><div class="field-error"><%= erros.cep %></div><% } %></div>
+          <div class="form-group span2"><label>Logradouro</label><input class="form-control" name="logradouro" aria-label="Logradouro" value="<%= valores.logradouro || '' %>"><% if (erros.logradouro) { %><div class="field-error"><%= erros.logradouro %></div><% } %></div>
+          <div class="form-group"><label>Número</label><input class="form-control" name="numero" aria-label="Número" value="<%= valores.numero || '' %>"><% if (erros.numero) { %><div class="field-error"><%= erros.numero %></div><% } %></div>
+          <div class="form-group"><label>Complemento</label><input class="form-control" name="complemento" aria-label="Complemento" value="<%= valores.complemento || '' %>"></div>
+          <div class="form-group"><label>Bairro</label><input class="form-control" name="bairro" aria-label="Bairro" value="<%= valores.bairro || '' %>"><% if (erros.bairro) { %><div class="field-error"><%= erros.bairro %></div><% } %></div>
+          <div class="form-group"><label>Cidade</label><input class="form-control" name="cidade" aria-label="Cidade" value="<%= valores.cidade || '' %>"><% if (erros.cidade) { %><div class="field-error"><%= erros.cidade %></div><% } %></div>
+          <div class="form-group"><label>UF</label><input class="form-control" name="uf" aria-label="UF" maxlength="2" value="<%= valores.uf || '' %>"><% if (erros.uf) { %><div class="field-error"><%= erros.uf %></div><% } %></div>
+        </div>
+        <button class="btn btn-primary" type="submit">Adicionar</button>
+      </form>
+    </section>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,15 @@
+<%# Navegação lateral da área do usuário. Espera: currentPath %>
+<aside class="account-nav card">
+  <h2 class="account-nav-title">Minha conta</h2>
+  <nav>
+    <a href="/minha-conta" class="<%= currentPath === '/minha-conta' ? 'active' : '' %>">Visão geral</a>
+    <a href="/minha-conta/pedidos" class="<%= currentPath.startsWith('/minha-conta/pedidos') ? 'active' : '' %>">Meus pedidos</a>
+    <a href="/minha-conta/enderecos" class="<%= currentPath.startsWith('/minha-conta/enderecos') ? 'active' : '' %>">Endereços</a>
+    <a href="/minha-conta/perfil" class="<%= currentPath.startsWith('/minha-conta/perfil') ? 'active' : '' %>">Perfil</a>
+    <a href="/favoritos" class="<%= currentPath === '/favoritos' ? 'active' : '' %>">Favoritos</a>
+  </nav>
+  <form action="/sair" method="post" style="margin-top:1rem">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button class="btn btn-outline btn-block" type="submit">Sair</button>
+  </form>
+</aside>

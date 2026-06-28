@@ -1,0 +1,16 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<div class="account-layout">
+  <%- include('_nav') %>
+  <div class="account-main">
+    <h1>Meus pedidos</h1>
+    <% if (pedidos.length === 0) { %>
+      <div class="state"><h2>Nenhum pedido ainda</h2><a class="btn btn-primary" href="/catalogo">Explorar o catálogo</a></div>
+    <% } else { %>
+      <%- include('_orders-table', { pedidos }) %>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

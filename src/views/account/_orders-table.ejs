@@ -1,0 +1,20 @@
+<%# Tabela de pedidos. Espera: pedidos (com total_itens) %>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr><th>Pedido</th><th>Data</th><th>Itens</th><th>Total</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% pedidos.forEach(function(p){ %>
+        <tr>
+          <td>#<%= p.id %></td>
+          <td><%= new Date(p.criado_em).toLocaleDateString('pt-BR') %></td>
+          <td><%= p.total_itens %></td>
+          <td><%= formatBRL(toCents(p.total)) %></td>
+          <td><span class="badge badge-<%= statusCor(p.status) %>"><%= statusLabel(p.status) %></span></td>
+          <td><a href="/pedido/<%= p.id %>">Ver</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

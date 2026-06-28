@@ -1,0 +1,22 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<div class="account-layout">
+  <%- include('_nav') %>
+  <div class="account-main">
+    <h1>Meus favoritos</h1>
+    <% if (livros.length === 0) { %>
+      <div class="state">
+        <h2>Sua lista de desejos está vazia</h2>
+        <p>Favorite livros para encontrá-los aqui depois.</p>
+        <a class="btn btn-primary" href="/catalogo">Explorar o catálogo</a>
+      </div>
+    <% } else { %>
+      <div class="book-grid">
+        <% livros.forEach(function(livro){ %><%- include('../partials/book-card', { livro }) %><% }) %>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
