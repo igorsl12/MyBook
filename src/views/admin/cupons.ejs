@@ -1,0 +1,56 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-header') %>
+
+<h1>Cupons</h1>
+
+<div class="admin-cols">
+  <section class="card">
+    <h2>Cupons cadastrados</h2>
+    <% if (cupons.length === 0) { %>
+      <p class="muted">Nenhum cupom ainda.</p>
+    <% } else { %>
+    <table class="data-table">
+      <thead><tr><th>Código</th><th>Tipo</th><th>Valor</th><th>Mín.</th><th>Usos</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% cupons.forEach(function(c){ %>
+          <tr>
+            <td><strong><%= c.codigo %></strong></td>
+            <td><%= c.tipo === 'percentual' ? '%' : 'R$' %></td>
+            <td><%= c.tipo === 'percentual' ? Number(c.valor) + '%' : formatBRL(toCents(c.valor)) %></td>
+            <td><%= formatBRL(toCents(c.valor_minimo)) %></td>
+            <td><%= c.usos %><%= c.uso_maximo ? '/' + c.uso_maximo : '' %></td>
+            <td><span class="badge badge-<%= c.ativo ? 'sucesso' : 'erro' %>"><%= c.ativo ? 'ativo' : 'inativo' %></span></td>
+            <td>
+              <form action="/admin/cupons/<%= c.id %>/alternar" method="post">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-ghost" type="submit"><%= c.ativo ? 'desativar' : 'ativar' %></button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } %>
+  </section>
+
+  <aside class="card">
+    <h2>Novo cupom</h2>
+    <form action="/admin/cupons" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-group"><label>Código</label><input class="form-control" name="codigo" placeholder="EX: LEIA20" required></div>
+      <div class="form-group"><label>Tipo</label>
+        <select class="form-control" name="tipo">
+          <option value="percentual">Percentual (%)</option>
+          <option value="fixo">Fixo (R$)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Valor</label><input class="form-control" type="number" step="0.01" min="0" name="valor" required></div>
+      <div class="form-group"><label>Valor mínimo (R$)</label><input class="form-control" type="number" step="0.01" min="0" name="valor_minimo" value="0"></div>
+      <div class="form-group"><label>Uso máximo (vazio = ilimitado)</label><input class="form-control" type="number" min="0" name="uso_maximo"></div>
+      <div class="form-group"><label>Validade</label><input class="form-control" type="date" name="validade"></div>
+      <button class="btn btn-primary" type="submit">Criar cupom</button>
+    </form>
+  </aside>
+</div>
+
+<%- include('../partials/admin-footer') %>

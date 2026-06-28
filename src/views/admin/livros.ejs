@@ -1,0 +1,44 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-header') %>
+
+<div class="admin-head">
+  <h1>Livros</h1>
+  <a class="btn btn-primary" href="/admin/livros/novo">+ Novo livro</a>
+</div>
+
+<% if (livros.length === 0) { %>
+  <p class="muted">Nenhum livro cadastrado.</p>
+<% } else { %>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th>Título</th><th>Editora</th><th>Preço</th><th>Estoque</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% livros.forEach(function(l){ %>
+        <tr>
+          <td><a href="/admin/livros/<%= l.id %>/editar"><%= l.titulo %></a> <% if (l.destaque) { %><span class="badge badge-info">destaque</span><% } %></td>
+          <td class="muted"><%= l.editora || '—' %></td>
+          <td>
+            <%= formatBRL(toCents(l.preco_promocional ?? l.preco)) %>
+          </td>
+          <td>
+            <form action="/admin/livros/<%= l.id %>/estoque" method="post" class="inline-stock">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input class="form-control" type="number" name="estoque" value="<%= l.estoque %>" min="0" style="width:72px" aria-label="Estoque de <%= l.titulo %>">
+              <button class="btn btn-ghost" type="submit">salvar</button>
+            </form>
+          </td>
+          <td><span class="badge badge-<%= l.ativo ? 'sucesso' : 'erro' %>"><%= l.ativo ? 'ativo' : 'inativo' %></span></td>
+          <td>
+            <form action="/admin/livros/<%= l.id %>/remover" method="post" data-confirm="Remover este livro? Esta ação é permanente.">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-ghost" type="submit">remover</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<%- include('../partials/admin-footer') %>

@@ -1,0 +1,37 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-header') %>
+
+<h1>Dashboard</h1>
+
+<div class="admin-stats">
+  <div class="card stat-card"><span class="stat-num"><%= formatBRL(metricas.receitaCents) %></span><span class="muted">Receita (pedidos não cancelados)</span></div>
+  <div class="card stat-card"><span class="stat-num"><%= metricas.pedidosPagos %></span><span class="muted">Pedidos válidos</span></div>
+  <div class="card stat-card"><span class="stat-num"><%= metricas.catalogo.livros %></span><span class="muted">Livros ativos</span></div>
+  <div class="card stat-card"><span class="stat-num"><%= metricas.catalogo.autores %></span><span class="muted">Autores</span></div>
+</div>
+
+<div class="admin-cols">
+  <section class="card">
+    <h2>Pedidos por status</h2>
+    <ul class="status-list">
+      <% ['pendente','pago','separacao','enviado','entregue','cancelado'].forEach(function(s){ %>
+        <li><span class="badge badge-<%= statusCor(s) %>"><%= statusLabel(s) %></span><strong><%= metricas.porStatus[s] || 0 %></strong></li>
+      <% }) %>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Estoque baixo (≤ 5)</h2>
+    <% if (metricas.estoqueBaixo.length === 0) { %>
+      <p class="muted">Nenhum livro com estoque baixo. 🎉</p>
+    <% } else { %>
+      <ul class="lowstock-list">
+        <% metricas.estoqueBaixo.forEach(function(l){ %>
+          <li><a href="/admin/livros/<%= l.id %>/editar"><%= l.titulo %></a><strong class="<%= l.estoque === 0 ? 'text-wine' : '' %>"><%= l.estoque %></strong></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+</div>
+
+<%- include('../partials/admin-footer') %>

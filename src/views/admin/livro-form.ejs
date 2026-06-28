@@ -1,0 +1,66 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-header') %>
+
+<% const novo = !livro.id; %>
+<div class="admin-head">
+  <h1><%= novo ? 'Novo livro' : 'Editar livro' %></h1>
+  <a class="btn btn-outline" href="/admin/livros">← Voltar</a>
+</div>
+
+<form class="card" action="<%= novo ? '/admin/livros/novo' : '/admin/livros/' + livro.id + '/editar' %>" method="post">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="form-grid form-grid-2">
+    <div class="form-group span2"><label>Título *</label><input class="form-control" name="titulo" value="<%= livro.titulo || '' %>" required><% if (erros.titulo) { %><div class="field-error"><%= erros.titulo %></div><% } %></div>
+    <div class="form-group span2"><label>Subtítulo</label><input class="form-control" name="subtitulo" value="<%= livro.subtitulo || '' %>"></div>
+    <div class="form-group"><label>ISBN</label><input class="form-control" name="isbn" value="<%= livro.isbn || '' %>"></div>
+    <div class="form-group"><label>Editora</label>
+      <select class="form-control" name="editora_id">
+        <option value="">—</option>
+        <% editoras.forEach(function(e){ %><option value="<%= e.id %>" <%= livro.editora_id === e.id ? 'selected' : '' %>><%= e.nome %></option><% }) %>
+      </select>
+    </div>
+    <div class="form-group"><label>Preço (R$) *</label><input class="form-control" type="number" step="0.01" min="0" name="preco" value="<%= livro.preco || '' %>" required></div>
+    <div class="form-group"><label>Preço promocional (R$)</label><input class="form-control" type="number" step="0.01" min="0" name="preco_promocional" value="<%= livro.preco_promocional || '' %>"></div>
+    <div class="form-group"><label>Estoque</label><input class="form-control" type="number" min="0" name="estoque" value="<%= livro.estoque != null ? livro.estoque : 0 %>"></div>
+    <div class="form-group"><label>Páginas</label><input class="form-control" type="number" min="0" name="paginas" value="<%= livro.paginas || '' %>"></div>
+    <div class="form-group"><label>Idioma</label><input class="form-control" name="idioma" value="<%= livro.idioma || 'Português' %>"></div>
+    <div class="form-group"><label>Formato</label>
+      <select class="form-control" name="formato">
+        <option value="fisico" <%= livro.formato === 'fisico' ? 'selected' : '' %>>Físico</option>
+        <option value="ebook" <%= livro.formato === 'ebook' ? 'selected' : '' %>>E-book</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Data de publicação</label><input class="form-control" type="date" name="data_publicacao" value="<%= livro.data_publicacao ? (new Date(livro.data_publicacao)).toISOString().slice(0,10) : '' %>"></div>
+    <div class="form-group span2"><label>URL da capa (opcional — senão gerada automaticamente)</label><input class="form-control" name="capa_url" value="<%= livro.capa_url || '' %>"></div>
+    <div class="form-group span2"><label>Descrição</label><textarea class="form-control" name="descricao" rows="4"><%= livro.descricao || '' %></textarea></div>
+  </div>
+
+  <div class="form-grid form-grid-2">
+    <div class="form-group">
+      <label>Autores</label>
+      <div class="checks">
+        <% autores.forEach(function(a){ %>
+          <label class="radio"><input type="checkbox" name="autores" value="<%= a.id %>" <%= (livro.autorIds||[]).includes(a.id) ? 'checked' : '' %>> <%= a.nome %></label>
+        <% }) %>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Categorias</label>
+      <div class="checks">
+        <% categorias.forEach(function(c){ %>
+          <label class="radio"><input type="checkbox" name="categorias" value="<%= c.id %>" <%= (livro.categoriaIds||[]).includes(c.id) ? 'checked' : '' %>> <%= c.nome %></label>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-row-inline">
+    <label class="radio"><input type="checkbox" name="destaque" <%= livro.destaque ? 'checked' : '' %>> Destaque na home</label>
+    <label class="radio"><input type="checkbox" name="ativo" <%= (livro.ativo === undefined || livro.ativo) ? 'checked' : '' %>> Ativo (visível na loja)</label>
+  </div>
+
+  <button class="btn btn-primary" type="submit"><%= novo ? 'Criar livro' : 'Salvar alterações' %></button>
+</form>
+
+<%- include('../partials/admin-footer') %>

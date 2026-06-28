@@ -1,0 +1,30 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-header') %>
+
+<h1>Pedidos</h1>
+
+<% if (pedidos.length === 0) { %>
+  <p class="muted">Nenhum pedido ainda.</p>
+<% } else { %>
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th>#</th><th>Cliente</th><th>Data</th><th>Itens</th><th>Pgto</th><th>Total</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% pedidos.forEach(function(p){ %>
+        <tr>
+          <td>#<%= p.id %></td>
+          <td class="muted"><%= p.email %></td>
+          <td><%= new Date(p.criado_em).toLocaleDateString('pt-BR') %></td>
+          <td><%= p.total_itens %></td>
+          <td><%= p.metodo_pagamento %></td>
+          <td><%= formatBRL(toCents(p.total)) %></td>
+          <td><span class="badge badge-<%= statusCor(p.status) %>"><%= statusLabel(p.status) %></span></td>
+          <td><a href="/admin/pedidos/<%= p.id %>">gerir</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<%- include('../partials/admin-footer') %>

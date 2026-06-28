@@ -1,0 +1,54 @@
+<%- include('../partials/head') %>
+<%- include('../partials/admin-header') %>
+
+<% const end = pedido.endereco_json || {}; %>
+<div class="admin-head">
+  <h1>Pedido #<%= pedido.id %></h1>
+  <a class="btn btn-outline" href="/admin/pedidos">← Voltar</a>
+</div>
+
+<div class="admin-cols">
+  <section class="card">
+    <h2>Itens</h2>
+    <table class="data-table">
+      <thead><tr><th>Livro</th><th>Qtd</th><th>Unit.</th><th>Subtotal</th></tr></thead>
+      <tbody>
+        <% pedido.itens.forEach(function(it){ %>
+          <tr><td><%= it.titulo %></td><td><%= it.quantidade %></td>
+            <td><%= formatBRL(toCents(it.preco_unitario)) %></td>
+            <td><%= formatBRL(toCents(it.preco_unitario)*it.quantidade) %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <div class="summary-row"><span>Subtotal</span><span><%= formatBRL(toCents(pedido.subtotal)) %></span></div>
+    <% if (Number(pedido.desconto) > 0) { %><div class="summary-row text-green"><span>Desconto</span><span>− <%= formatBRL(toCents(pedido.desconto)) %></span></div><% } %>
+    <div class="summary-row"><span>Frete</span><span><%= formatBRL(toCents(pedido.frete)) %></span></div>
+    <div class="summary-row total"><span>Total</span><strong><%= formatBRL(toCents(pedido.total)) %></strong></div>
+  </section>
+
+  <aside class="card">
+    <h2>Status</h2>
+    <p><span class="badge badge-<%= statusCor(pedido.status) %>"><%= statusLabel(pedido.status) %></span></p>
+    <% if (transicoes.length) { %>
+      <form action="/admin/pedidos/<%= pedido.id %>/status" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group">
+          <label>Avançar para</label>
+          <select class="form-control" name="status">
+            <% transicoes.forEach(function(s){ %><option value="<%= s %>"><%= statusLabel(s) %></option><% }) %>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">Atualizar status</button>
+      </form>
+    <% } else { %>
+      <p class="muted">Sem transições disponíveis a partir deste status.</p>
+    <% } %>
+
+    <h3 style="margin-top:1.25rem">Entrega</h3>
+    <p class="muted"><%= end.logradouro %>, <%= end.numero %><br><%= end.bairro %>, <%= end.cidade %>/<%= end.uf %> · <%= end.cep %></p>
+    <h3>Pagamento</h3>
+    <p class="muted"><%= pedido.metodo_pagamento %> <span class="badge-sandbox">sandbox</span></p>
+  </aside>
+</div>
+
+<%- include('../partials/admin-footer') %>
