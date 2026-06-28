@@ -9,3 +9,6 @@ dist/
 .claude/
 .venv/
 preview/
+
+# Logs locais
+*.log
