@@ -1,0 +1,24 @@
+{
+  "name": "Livraria - Claude Code + Postgres (bypass)",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "workspace",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "node",
+  "remoteEnv": {
+    // Permite o modo bypass dentro do container (isolado, portanto seguro).
+    "IS_SANDBOX": "1",
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code"
+      ]
+    }
+  },
+  // Instala as dependências do projeto ao criar o container.
+  "postCreateCommand": "npm install"
+}

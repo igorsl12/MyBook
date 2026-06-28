@@ -1,0 +1,49 @@
+# Compose usado pelo dev container: workspace (onde o Claude Code roda) + Postgres.
+# Senhas usam defaults de DEV — não reaproveite estes valores em produção.
+services:
+  workspace:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    environment:
+      IS_SANDBOX: "1"
+      CLAUDE_CONFIG_DIR: /home/node/.claude
+      # Conexão com o banco a partir do workspace.
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${DB_USER:-livraria}
+      DB_PASSWORD: ${DB_PASSWORD:-livraria_dev}
+      DB_NAME: ${DB_NAME:-livraria}
+    volumes:
+      - ..:/workspace:cached
+      - livraria-claude-config:/home/node/.claude
+      - livraria-bashhistory:/commandhistory
+    # Mantém o container vivo; o VS Code anexa nele.
+    command: sleep infinity
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-livraria}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-livraria_dev}
+      POSTGRES_DB: ${DB_NAME:-livraria}
+    ports:
+      # Exposto no host para acesso com DBeaver/pgAdmin durante o dev.
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-livraria} -d ${DB_NAME:-livraria}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  livraria-claude-config:
+  livraria-bashhistory:

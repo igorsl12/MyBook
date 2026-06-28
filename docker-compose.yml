@@ -1,0 +1,44 @@
+services:
+  app:
+    build: .
+    container_name: livraria-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      SESSION_SECRET: ${SESSION_SECRET:?defina SESSION_SECRET no .env}
+      FRETE_GRATIS_ACIMA: ${FRETE_GRATIS_ACIMA:-150}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-livraria}
+      DB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+      DB_NAME: ${DB_NAME:-livraria}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: livraria-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-livraria}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+      POSTGRES_DB: ${DB_NAME:-livraria}
+    ports:
+      # Exposto só para acesso local (ex.: DBeaver). Remova em produção.
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Scripts .sql aqui rodam automaticamente na primeira criação do banco.
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-livraria} -d ${DB_NAME:-livraria}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
