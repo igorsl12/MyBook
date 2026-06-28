@@ -1,0 +1,50 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<h1>Seu carrinho</h1>
+
+<% if (itens.length === 0) { %>
+  <div class="state">
+    <h2>Seu carrinho está vazio</h2>
+    <p>Que tal começar por um clássico?</p>
+    <a class="btn btn-primary" href="/catalogo">Explorar o catálogo</a>
+  </div>
+<% } else { %>
+  <div class="cart-layout">
+    <section class="cart-items">
+      <% itens.forEach(function(it){ %>
+        <article class="cart-item card">
+          <a href="/livro/<%= it.slug %>"><img class="cart-thumb" src="<%= it.capa %>" alt="Capa de <%= it.titulo %>" width="70" height="105"></a>
+          <div class="cart-item-body">
+            <a href="/livro/<%= it.slug %>" class="cart-item-title"><%= it.titulo %></a>
+            <div class="muted"><%= formatBRL(it.unitCents) %> cada</div>
+            <% if (it.excedeEstoque) { %>
+              <div class="field-error">Só há <%= it.estoque %> em estoque.</div>
+            <% } %>
+          </div>
+          <form class="cart-qty" action="/carrinho/atualizar" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="livro_id" value="<%= it.livro_id %>">
+            <input class="form-control" type="number" name="quantidade" value="<%= it.quantidade %>" min="0" max="<%= it.estoque %>" aria-label="Quantidade de <%= it.titulo %>" data-autosubmit>
+          </form>
+          <div class="cart-line-total"><%= formatBRL(it.subtotalCents) %></div>
+          <form action="/carrinho/remover" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="livro_id" value="<%= it.livro_id %>">
+            <button class="btn btn-ghost" type="submit" aria-label="Remover <%= it.titulo %>">✕</button>
+          </form>
+        </article>
+      <% }) %>
+    </section>
+
+    <aside class="cart-summary card">
+      <h2>Resumo</h2>
+      <div class="summary-row"><span><%= totalItens %> ite<%= totalItens === 1 ? 'm' : 'ns' %></span><strong><%= formatBRL(subtotalCents) %></strong></div>
+      <p class="muted" style="font-size:.85rem">Frete e descontos calculados no checkout.</p>
+      <a class="btn btn-primary btn-block" href="/checkout">Finalizar compra</a>
+      <a class="btn btn-outline btn-block" href="/catalogo" style="margin-top:.5rem">Continuar comprando</a>
+    </aside>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>
