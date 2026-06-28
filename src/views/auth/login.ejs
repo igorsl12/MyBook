@@ -1,0 +1,33 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<div class="auth-wrap">
+  <div class="card">
+    <h1>Entrar</h1>
+    <p class="muted">Acesse sua conta MyBook para acompanhar pedidos e favoritos.</p>
+
+    <% if (erros.geral) { %><div class="alert alert-erro"><%= erros.geral %></div><% } %>
+
+    <form action="/entrar" method="post" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="next" value="<%= next %>">
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input class="form-control" id="email" type="email" name="email" autocomplete="email"
+               value="<%= valores.email || '' %>" required>
+      </div>
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input class="form-control" id="senha" type="password" name="senha" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+    </form>
+
+    <p class="text-center muted" style="margin-top:1rem">
+      Não tem conta? <a href="/cadastrar">Criar conta</a>
+    </p>
+    <p class="form-help text-center">Demo: admin@mybook.com.br / admin123 · leitor@mybook.com.br / cliente123</p>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

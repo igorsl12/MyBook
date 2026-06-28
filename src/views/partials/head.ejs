@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= titulo ? titulo : 'MyBook' %></title>
+  <% const _desc = (typeof metaDescricao !== 'undefined' ? metaDescricao : 'MyBook — livraria online: clássicos, lançamentos e mais vendidos com entrega para todo o Brasil.'); %>
+  <meta name="description" content="<%= _desc %>">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#211e1a">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MyBook">
+  <meta property="og:title" content="<%= titulo ? titulo : 'MyBook' %>">
+  <meta property="og:description" content="<%= _desc %>">
+  <% if (typeof ogImage !== 'undefined' && ogImage) { %><meta property="og:image" content="<%= ogImage %>"><% } %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <link rel="icon" href="/capa/dom-casmurro.svg" type="image/svg+xml">
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>

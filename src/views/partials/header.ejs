@@ -1,0 +1,52 @@
+<header class="site-header">
+  <nav class="nav" aria-label="Principal">
+    <a class="brand" href="/">My<b>Book</b></a>
+
+    <form class="search-form" action="/buscar" method="get" role="search">
+      <label class="skip-link" for="q">Buscar livros</label>
+      <input id="q" type="search" name="q" placeholder="Busque por título, autor ou ISBN"
+             value="<%= (typeof query !== 'undefined' && query.q) ? query.q : '' %>">
+      <button type="submit" aria-label="Buscar">Buscar</button>
+    </form>
+
+    <div class="nav-actions">
+      <% if (usuario) { %>
+        <a class="nav-link" href="/minha-conta">Olá, <%= usuario.email.split('@')[0] %></a>
+        <% if (usuario.papel === 'admin') { %>
+          <a class="nav-link" href="/admin">Admin</a>
+        <% } %>
+        <a class="nav-link" href="/favoritos">Favoritos</a>
+        <form action="/sair" method="post" style="display:inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn-ghost btn" type="submit">Sair</button>
+        </form>
+      <% } else { %>
+        <a class="nav-link" href="/entrar">Entrar</a>
+        <a class="nav-link" href="/cadastrar">Criar conta</a>
+      <% } %>
+      <a class="nav-link" href="/carrinho">
+        Carrinho<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount %></span><% } %>
+      </a>
+    </div>
+  </nav>
+
+  <% var _catnav = (typeof navCategorias !== 'undefined' && navCategorias && navCategorias.length) ? navCategorias : (typeof categorias !== 'undefined' && categorias ? categorias : []); %>
+  <% if (_catnav.length) { %>
+  <div class="catbar">
+    <ul>
+      <li><a href="/catalogo">Todos os livros</a></li>
+      <% _catnav.forEach(function(c){ %>
+        <li><a href="/categoria/<%= c.slug %>"><%= c.nome %></a></li>
+      <% }) %>
+    </ul>
+  </div>
+  <% } %>
+</header>
+
+<% if (flash && flash.length) { %>
+  <div class="container">
+    <% flash.forEach(function(f){ %><div class="alert alert-<%= f.tipo %>" role="status"><%= f.mensagem %></div><% }) %>
+  </div>
+<% } %>
+
+<main id="conteudo" class="container">

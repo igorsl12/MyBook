@@ -1,0 +1,26 @@
+<%# Card de livro reutilizável. Espera: livro %>
+<article class="book-card">
+  <a class="cover-wrap" href="/livro/<%= livro.slug %>" aria-label="<%= livro.titulo %>">
+    <img src="<%= livro.capa %>" alt="Capa de <%= livro.titulo %>" loading="lazy" width="300" height="450">
+    <% if (livro.semEstoque) { %>
+      <span class="tag out">Esgotado</span>
+    <% } else if (livro.emPromocao) { %>
+      <span class="tag">-<%= livro.descontoPct %>%</span>
+    <% } else if (livro.destaque) { %>
+      <span class="tag gold">Destaque</span>
+    <% } %>
+  </a>
+  <div class="body">
+    <a href="/livro/<%= livro.slug %>" class="title"><%= livro.titulo %></a>
+    <span class="author">
+      <% if (livro.autores && livro.autores.length) { %><%= livro.autores.map(a => a.nome).join(', ') %><% } %>
+    </span>
+    <% if (livro.totalAvaliacoes > 0) { %>
+      <span class="rating">★ <%= livro.notaMedia.toFixed(1) %> <span class="muted">(<%= livro.totalAvaliacoes %>)</span></span>
+    <% } %>
+    <div class="price-row">
+      <span class="price"><%= formatBRL(livro.precoEfetivoCents) %></span>
+      <% if (livro.emPromocao) { %><span class="price-old"><%= formatBRL(livro.precoCents) %></span><% } %>
+    </div>
+  </div>
+</article>

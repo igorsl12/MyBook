@@ -1,0 +1,9 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+<div class="state">
+  <h1>Ops</h1>
+  <h2><%= typeof titulo !== 'undefined' ? titulo : 'Algo deu errado' %></h2>
+  <p><%= typeof mensagem !== 'undefined' ? mensagem : 'Tente novamente em instantes.' %></p>
+  <a class="btn btn-primary" href="/">Voltar à home</a>
+</div>
+<%- include('../partials/footer') %>

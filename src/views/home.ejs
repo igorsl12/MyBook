@@ -1,0 +1,63 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+
+<section class="hero">
+  <span class="eyebrow" style="color:var(--gold); font-size:.8rem; letter-spacing:2px; text-transform:uppercase;">Bem-vindo à MyBook</span>
+  <h1>Sua próxima leitura começa aqui</h1>
+  <p>Clássicos que atravessam gerações, lançamentos que todo mundo comenta e os títulos mais vendidos — com entrega para todo o Brasil.</p>
+  <a class="btn btn-gold" href="/catalogo">Explorar o catálogo</a>
+</section>
+
+<% if (destaques.length) { %>
+<section class="section">
+  <div class="section-head">
+    <div><span class="eyebrow">Selecionados</span><h2>Destaques</h2></div>
+    <a href="/catalogo">Ver todos →</a>
+  </div>
+  <div class="book-grid">
+    <% destaques.forEach(function(livro){ %><%- include('partials/book-card', { livro }) %><% }) %>
+  </div>
+</section>
+<% } %>
+
+<% if (lancamentos.length) { %>
+<section class="section">
+  <div class="section-head">
+    <div><span class="eyebrow">Acabaram de chegar</span><h2>Lançamentos</h2></div>
+    <a href="/buscar?ordenar=lancamento">Ver todos →</a>
+  </div>
+  <div class="book-grid">
+    <% lancamentos.forEach(function(livro){ %><%- include('partials/book-card', { livro }) %><% }) %>
+  </div>
+</section>
+<% } %>
+
+<% if (maisVendidos.length) { %>
+<section class="section">
+  <div class="section-head">
+    <div><span class="eyebrow">Os queridinhos</span><h2>Mais vendidos</h2></div>
+    <a href="/buscar?ordenar=vendidos">Ver todos →</a>
+  </div>
+  <div class="book-grid">
+    <% maisVendidos.forEach(function(livro){ %><%- include('partials/book-card', { livro }) %><% }) %>
+  </div>
+</section>
+<% } %>
+
+<% if (categorias.length) { %>
+<section class="section">
+  <div class="section-head"><div><span class="eyebrow">Navegue por</span><h2>Categorias</h2></div></div>
+  <div class="book-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+    <% categorias.forEach(function(c){ %>
+      <a class="card" href="/categoria/<%= c.slug %>" style="text-align:center; text-decoration:none; color:var(--ink)">
+        <strong style="font-family:var(--serif); font-size:1.15rem"><%= c.nome %></strong>
+        <% if (c.filhos && c.filhos.length) { %>
+          <div class="muted" style="font-size:.85rem; margin-top:.3rem"><%= c.filhos.map(f => f.nome).join(' · ') %></div>
+        <% } %>
+      </a>
+    <% }) %>
+  </div>
+</section>
+<% } %>
+
+<%- include('partials/footer') %>
