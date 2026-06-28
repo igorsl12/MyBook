@@ -1,0 +1,111 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<%
+  // Helper: monta querystring preservando filtros e trocando um par.
+  function qs(overrides) {
+    const base = Object.assign({}, query, overrides);
+    const parts = [];
+    for (const [k, v] of Object.entries(base)) {
+      if (v === undefined || v === null || v === '') continue;
+      parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    }
+    return parts.length ? '?' + parts.join('&') : '';
+  }
+%>
+
+<nav class="breadcrumb" aria-label="Você está em">
+  <a href="/">Início</a> <span>/</span>
+  <% if (contexto.tipo === 'categoria') { %><span>Categoria</span> <span>/</span> <strong><%= contexto.categoria.nome %></strong>
+  <% } else if (contexto.tipo === 'autor') { %><span>Autor</span> <span>/</span> <strong><%= contexto.autor.nome %></strong>
+  <% } else { %><strong><%= titulo %></strong><% } %>
+</nav>
+
+<div class="catalog-head">
+  <h1><%= titulo %></h1>
+  <p class="muted"><%= resultado.total %> livro<%= resultado.total === 1 ? '' : 's' %> encontrado<%= resultado.total === 1 ? '' : 's' %></p>
+</div>
+
+<div class="catalog-layout">
+  <aside class="filters card" aria-label="Filtros">
+    <form action="" method="get">
+      <% if (query.q) { %><input type="hidden" name="q" value="<%= query.q %>"><% } %>
+
+      <div class="filter-group">
+        <h3>Ordenar por</h3>
+        <select class="form-control" name="ordenar" data-autosubmit>
+          <% const ordens = [['relevancia','Relevância'],['preco_asc','Menor preço'],['preco_desc','Maior preço'],['lancamento','Lançamento'],['vendidos','Mais vendidos'],['titulo','Título (A-Z)']]; %>
+          <% ordens.forEach(function(o){ %>
+            <option value="<%= o[0] %>" <%= filtros.ordenar === o[0] ? 'selected' : '' %>><%= o[1] %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <% if (contexto.tipo !== 'categoria') { %>
+      <div class="filter-group">
+        <h3>Categoria</h3>
+        <select class="form-control" name="categoria" data-autosubmit>
+          <option value="">Todas</option>
+          <% categorias.forEach(function(c){ %>
+            <option value="<%= c.slug %>" <%= filtros.categoriaSlug === c.slug ? 'selected' : '' %>><%= c.nome %></option>
+            <% (c.filhos||[]).forEach(function(f){ %>
+              <option value="<%= f.slug %>" <%= filtros.categoriaSlug === f.slug ? 'selected' : '' %>>&nbsp;&nbsp;<%= f.nome %></option>
+            <% }) %>
+          <% }) %>
+        </select>
+      </div>
+      <% } %>
+
+      <div class="filter-group">
+        <h3>Formato</h3>
+        <label class="radio"><input type="radio" name="formato" value="" <%= !filtros.formato ? 'checked' : '' %> data-autosubmit> Todos</label>
+        <label class="radio"><input type="radio" name="formato" value="fisico" <%= filtros.formato === 'fisico' ? 'checked' : '' %> data-autosubmit> Físico</label>
+        <label class="radio"><input type="radio" name="formato" value="ebook" <%= filtros.formato === 'ebook' ? 'checked' : '' %> data-autosubmit> E-book</label>
+      </div>
+
+      <div class="filter-group">
+        <h3>Faixa de preço (R$)</h3>
+        <div class="price-range">
+          <input class="form-control" type="number" name="preco_min" min="0" step="1" placeholder="mín" value="<%= query.preco_min || '' %>">
+          <span>—</span>
+          <input class="form-control" type="number" name="preco_max" min="0" step="1" placeholder="máx" value="<%= query.preco_max || '' %>">
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="radio"><input type="checkbox" name="disponivel" value="1" <%= filtros.disponivel ? 'checked' : '' %> data-autosubmit> Só disponíveis</label>
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit">Aplicar filtros</button>
+      <a class="btn btn-outline btn-block" href="<%= contexto.tipo === 'categoria' ? '/categoria/' + contexto.categoria.slug : (contexto.tipo === 'autor' ? '/autor/' + contexto.autor.slug : '/catalogo') %>" style="margin-top:.5rem">Limpar</a>
+    </form>
+  </aside>
+
+  <section class="catalog-results">
+    <% if (resultado.itens.length === 0) { %>
+      <div class="state">
+        <h2>Nenhum livro encontrado</h2>
+        <p>Tente ajustar os filtros ou buscar por outro termo.</p>
+        <a class="btn btn-primary" href="/catalogo">Ver todo o catálogo</a>
+      </div>
+    <% } else { %>
+      <div class="book-grid">
+        <% resultado.itens.forEach(function(livro){ %><%- include('../partials/book-card', { livro }) %><% }) %>
+      </div>
+
+      <% if (resultado.totalPaginas > 1) { %>
+      <nav class="pagination" aria-label="Paginação">
+        <% if (resultado.pagina > 1) { %>
+          <a class="btn btn-outline" href="<%= qs({ pagina: resultado.pagina - 1 }) %>">← Anterior</a>
+        <% } %>
+        <span class="muted">Página <%= resultado.pagina %> de <%= resultado.totalPaginas %></span>
+        <% if (resultado.pagina < resultado.totalPaginas) { %>
+          <a class="btn btn-outline" href="<%= qs({ pagina: resultado.pagina + 1 }) %>">Próxima →</a>
+        <% } %>
+      </nav>
+      <% } %>
+    <% } %>
+  </section>
+</div>
+
+<%- include('../partials/footer') %>

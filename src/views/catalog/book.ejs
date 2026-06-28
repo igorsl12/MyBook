@@ -1,0 +1,147 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<script type="application/ld+json">
+<%- JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Book',
+  name: livro.titulo,
+  author: (livro.autores || []).map(a => ({ '@type': 'Person', name: a.nome })),
+  isbn: livro.isbn || undefined,
+  numberOfPages: livro.paginas || undefined,
+  inLanguage: livro.idioma,
+  publisher: livro.editora_nome || undefined,
+  aggregateRating: livro.totalAvaliacoes > 0 ? {
+    '@type': 'AggregateRating', ratingValue: livro.notaMedia, reviewCount: livro.totalAvaliacoes,
+  } : undefined,
+  offers: {
+    '@type': 'Offer', priceCurrency: 'BRL',
+    price: (livro.precoEfetivoCents / 100).toFixed(2),
+    availability: livro.semEstoque ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+  },
+}).replace(/</g, '\\u003c').replace(/>/g, '\\u003e') %>
+</script>
+
+<nav class="breadcrumb" aria-label="Você está em">
+  <a href="/">Início</a> <span>/</span>
+  <% if (livro.categorias && livro.categorias.length) { %>
+    <a href="/categoria/<%= livro.categorias[0].slug %>"><%= livro.categorias[0].nome %></a> <span>/</span>
+  <% } %>
+  <strong><%= livro.titulo %></strong>
+</nav>
+
+<article class="book-detail">
+  <div class="book-detail-cover">
+    <img src="<%= livro.capa %>" alt="Capa de <%= livro.titulo %>" width="300" height="450">
+  </div>
+
+  <div class="book-detail-info">
+    <h1><%= livro.titulo %></h1>
+    <% if (livro.subtitulo) { %><p class="subtitle"><%= livro.subtitulo %></p><% } %>
+
+    <p class="byline">
+      <% if (livro.autores && livro.autores.length) { %>
+        por <% livro.autores.forEach(function(a, i){ %><a href="/autor/<%= a.slug %>"><%= a.nome %></a><%= i < livro.autores.length - 1 ? ', ' : '' %><% }) %>
+      <% } %>
+      <% if (livro.editora_nome) { %> · <span class="muted"><%= livro.editora_nome %></span><% } %>
+    </p>
+
+    <% if (livro.totalAvaliacoes > 0) { %>
+      <p class="rating">★ <%= livro.notaMedia.toFixed(1) %> <span class="muted">· <%= livro.totalAvaliacoes %> avaliação<%= livro.totalAvaliacoes === 1 ? '' : 'ões' %></span></p>
+    <% } %>
+
+    <div class="price-block">
+      <span class="price price-lg"><%= formatBRL(livro.precoEfetivoCents) %></span>
+      <% if (livro.emPromocao) { %>
+        <span class="price-old"><%= formatBRL(livro.precoCents) %></span>
+        <span class="tag">-<%= livro.descontoPct %>%</span>
+      <% } %>
+    </div>
+
+    <p class="stock <%= livro.semEstoque ? 'out' : 'in' %>">
+      <%= livro.semEstoque ? 'Indisponível no momento' : (livro.estoque <= 5 ? 'Últimas ' + livro.estoque + ' unidades' : 'Em estoque') %>
+    </p>
+
+    <div class="book-actions">
+      <form action="/carrinho/adicionar" method="post" style="display:flex; gap:.6rem; flex-wrap:wrap">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="livro_id" value="<%= livro.id %>">
+        <label class="qty">
+          <span class="skip-link">Quantidade</span>
+          <input class="form-control" type="number" name="quantidade" value="1" min="1" max="<%= Math.max(1, livro.estoque) %>" <%= livro.semEstoque ? 'disabled' : '' %>>
+        </label>
+        <button class="btn btn-primary" type="submit" <%= livro.semEstoque ? 'disabled' : '' %>>Adicionar ao carrinho</button>
+      </form>
+
+      <form action="/favoritos/<%= livro.id %>" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="redirect" value="/livro/<%= livro.slug %>">
+        <button class="btn btn-outline" type="submit"><%= favoritado ? '♥ Nos favoritos' : '♡ Favoritar' %></button>
+      </form>
+    </div>
+
+    <dl class="book-meta">
+      <% if (livro.paginas) { %><div><dt>Páginas</dt><dd><%= livro.paginas %></dd></div><% } %>
+      <div><dt>Idioma</dt><dd><%= livro.idioma %></dd></div>
+      <div><dt>Formato</dt><dd><%= livro.formato === 'ebook' ? 'E-book' : 'Físico' %></dd></div>
+      <% if (livro.isbn) { %><div><dt>ISBN</dt><dd><%= livro.isbn %></dd></div><% } %>
+      <% if (livro.data_publicacao) { %><div><dt>Publicação</dt><dd><%= new Date(livro.data_publicacao).getFullYear() %></dd></div><% } %>
+    </dl>
+  </div>
+</article>
+
+<% if (livro.descricao) { %>
+<section class="section">
+  <h2>Sobre o livro</h2>
+  <p class="prose"><%= livro.descricao %></p>
+</section>
+<% } %>
+
+<section class="section">
+  <h2>Avaliações</h2>
+
+  <% if (typeof podeAvaliar !== 'undefined' && podeAvaliar) { %>
+    <form class="card review-form" action="/livro/<%= livro.slug %>/avaliar" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <h3>Avalie este livro</h3>
+      <div class="form-group">
+        <label for="nota">Sua nota</label>
+        <select class="form-control" id="nota" name="nota" style="max-width:120px">
+          <% for (let n = 5; n >= 1; n--) { %><option value="<%= n %>"><%= n %> ★</option><% } %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="comentario">Comentário (opcional)</label>
+        <textarea class="form-control" id="comentario" name="comentario" rows="3"></textarea>
+      </div>
+      <button class="btn btn-primary" type="submit">Enviar avaliação</button>
+    </form>
+  <% } %>
+
+  <% if (avaliacoes.length === 0) { %>
+    <p class="muted">Este livro ainda não tem avaliações. Compre e seja o primeiro a avaliar.</p>
+  <% } else { %>
+    <ul class="reviews">
+      <% avaliacoes.forEach(function(av){ %>
+        <li class="review card">
+          <div class="review-head">
+            <strong><%= av.autor %></strong>
+            <span class="rating">★ <%= av.nota %></span>
+          </div>
+          <% if (av.comentario) { %><p><%= av.comentario %></p><% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<% if (relacionados.length) { %>
+<section class="section">
+  <div class="section-head"><div><span class="eyebrow">Quem leu, também gostou</span><h2>Relacionados</h2></div></div>
+  <div class="book-grid">
+    <% relacionados.forEach(function(livro){ %><%- include('../partials/book-card', { livro }) %><% }) %>
+  </div>
+</section>
+<% } %>
+
+<%- include('../partials/footer') %>
