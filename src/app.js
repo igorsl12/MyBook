@@ -59,9 +59,10 @@ export function createApp() {
     maxAge: env.isProd ? '7d' : 0,
   }));
 
-  // Parsers.
-  app.use(express.urlencoded({ extended: true }));
-  app.use(express.json());
+  // Parsers com limite de corpo (mitiga DoS por payload grande). Uploads de mídia
+  // são tratados pelo multer (com limites próprios) na rota de avaliação.
+  app.use(express.urlencoded({ extended: true, limit: '64kb' }));
+  app.use(express.json({ limit: '32kb' }));
 
   // Sessão persistida no Postgres.
   const PgStore = connectPgSimple(session);
@@ -117,7 +118,9 @@ export function createApp() {
   // Error handler central.
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    const status = res.statusCode >= 400 ? res.statusCode : 500;
+    // Respeita o status do erro (ex.: 413 body-parser, 403 CSRF) antes de cair em 500.
+    const status = err.status || err.statusCode
+      || (res.statusCode >= 400 ? res.statusCode : 500);
     if (status >= 500) console.error('Erro não tratado:', err);
     res.status(status).render('errors/500', {
       titulo: 'Algo deu errado',

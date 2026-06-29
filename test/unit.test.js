@@ -8,8 +8,9 @@ import { processarPagamento, metodoValido, statusInicial } from '../src/services
 import { gerarCapaSVG } from '../src/services/cover.js';
 import { TRANSICOES, statusLabel } from '../src/lib/orderStatus.js';
 import {
-  validate, required, isEmail, isCEP, minLen, hasErrors,
+  validate, required, isEmail, isCEP, isCPF, minLen, hasErrors,
 } from '../src/lib/validate.js';
+import { encrypt, decrypt, maskCpf } from '../src/lib/crypto.js';
 
 test('money: toCents/fromCents/format sem erro de float', () => {
   assert.equal(toCents('49.90'), 4990);
@@ -67,6 +68,22 @@ test('status de pedido: transições válidas', () => {
   assert.deepEqual(TRANSICOES.pendente, ['pago', 'cancelado']);
   assert.deepEqual(TRANSICOES.entregue, []);
   assert.equal(statusLabel('pago'), 'Pago');
+});
+
+test('crypto: cifra/decifra CPF (AES-256-GCM) e mascara', () => {
+  const cifrado = encrypt('123.456.789-09');
+  assert.ok(cifrado.startsWith('enc:v1:'));
+  assert.doesNotMatch(cifrado, /789-09/);        // não vaza o valor
+  assert.equal(decrypt(cifrado), '123.456.789-09');
+  assert.equal(decrypt('123.456.789-09'), null); // plaintext legado não é "decifrado"
+  assert.equal(decrypt('enc:v1:adulterado'), null);
+  assert.equal(maskCpf('12345678909'), '•••.•••.789-09');
+});
+
+test('validação de CPF (dígitos verificadores)', () => {
+  assert.equal(isCPF()('529.982.247-25'), null);  // CPF válido
+  assert.match(isCPF()('111.111.111-11'), /inválido/); // sequência repetida
+  assert.match(isCPF()('123.456.789-00'), /inválido/); // dígitos errados
 });
 
 test('validação: required/email/cep/minLen', () => {

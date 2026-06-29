@@ -40,6 +40,23 @@ export const isUF = () => (v) =>
     ? 'UF inválida.'
     : null;
 
+// Validação de CPF com dígitos verificadores (rejeita sequências repetidas).
+function cpfValido(cpf) {
+  const d = String(cpf).replace(/\D/g, '');
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  let soma = 0;
+  for (let i = 0; i < 9; i++) soma += parseInt(d[i], 10) * (10 - i);
+  let r = (soma * 10) % 11; if (r === 10) r = 0;
+  if (r !== parseInt(d[9], 10)) return false;
+  soma = 0;
+  for (let i = 0; i < 10; i++) soma += parseInt(d[i], 10) * (11 - i);
+  r = (soma * 10) % 11; if (r === 10) r = 0;
+  return r === parseInt(d[10], 10);
+}
+
+export const isCPF = () => (v) =>
+  v && !cpfValido(v) ? 'CPF inválido.' : null;
+
 export const isInt = (label = 'Valor') => (v) =>
   v !== '' && v !== undefined && !Number.isInteger(Number(v))
     ? `${label} deve ser um número inteiro.`

@@ -30,7 +30,7 @@ CREATE TABLE perfis (
   usuario_id  INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
   nome        VARCHAR(160) NOT NULL,
   telefone    VARCHAR(20),
-  cpf         VARCHAR(14)
+  cpf         TEXT          -- armazenado CIFRADO (AES-256-GCM), nunca em texto puro
 );
 
 CREATE TABLE enderecos (

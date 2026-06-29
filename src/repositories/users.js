@@ -1,5 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { query, withTransaction } from '../db.js';
+import { encrypt, decrypt } from '../lib/crypto.js';
+
+const BCRYPT_COST = 12; // custo de hash de senha (mais alto = mais lento p/ brute-force)
 
 export async function findByEmail(email) {
   const { rows } = await query('SELECT * FROM usuarios WHERE email = $1', [
@@ -15,12 +18,15 @@ export async function findById(id) {
      WHERE u.id = $1`,
     [id],
   );
-  return rows[0] ?? null;
+  const row = rows[0] ?? null;
+  // CPF é armazenado cifrado; decifra apenas no servidor (nunca vai cru ao front).
+  if (row) row.cpf = decrypt(row.cpf);
+  return row;
 }
 
 /** Cria usuário + perfil numa transação. Devolve o usuário criado (sem hash). */
 export async function create({ email, senha, nome }) {
-  const senhaHash = await bcrypt.hash(senha, 10);
+  const senhaHash = await bcrypt.hash(senha, BCRYPT_COST);
   try {
     return await withTransaction(async (client) => {
       const u = await client.query(
@@ -56,8 +62,17 @@ export async function verifyCredentials(email, senha) {
 }
 
 export async function updateProfile(usuarioId, { nome, telefone, cpf }) {
-  await query(
-    `UPDATE perfis SET nome = $2, telefone = $3, cpf = $4 WHERE usuario_id = $1`,
-    [usuarioId, nome, telefone || null, cpf || null],
-  );
+  // Só sobrescreve o CPF quando um novo valor é informado (e o guarda cifrado).
+  // Se vier vazio, preserva o CPF atual.
+  if (cpf) {
+    await query(
+      'UPDATE perfis SET nome = $2, telefone = $3, cpf = $4 WHERE usuario_id = $1',
+      [usuarioId, nome, telefone || null, encrypt(cpf)],
+    );
+  } else {
+    await query(
+      'UPDATE perfis SET nome = $2, telefone = $3 WHERE usuario_id = $1',
+      [usuarioId, nome, telefone || null],
+    );
+  }
 }

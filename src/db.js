@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { env } from './config/env.js';
 
 const { Pool } = pg;
 
@@ -16,6 +17,8 @@ export const pool = new Pool({
   max: Number(process.env.DB_POOL_MAX ?? 10),
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
+  // TLS na conexão com o banco (managed Postgres). Ative com DB_SSL=true.
+  ssl: env.dbSsl ? { rejectUnauthorized: false } : false,
 });
 
 // Helper de consulta: `query('SELECT ... $1', [valor])` → rows.

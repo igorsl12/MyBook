@@ -14,8 +14,9 @@ import {
   uploadReviewMedia, sniffTipo, removerArquivos, REVIEW_DIR,
 } from '../lib/upload.js';
 import {
-  validate, required, isCEP, isUF, hasErrors,
+  validate, required, isCEP, isUF, isCPF, hasErrors,
 } from '../lib/validate.js';
+import { maskCpf } from '../lib/crypto.js';
 
 export const accountRouter = Router();
 
@@ -128,14 +129,19 @@ accountRouter.get('/minha-conta', requireAuth, asyncHandler(async (req, res) => 
 // ---- Perfil ----
 accountRouter.get('/minha-conta/perfil', requireAuth, asyncHandler(async (req, res) => {
   const perfil = await Users.findById(req.session.usuario.id);
-  res.render('account/perfil', { titulo: 'Meu perfil', perfil, erros: {} });
+  const cpfMascarado = maskCpf(perfil.cpf);
+  delete perfil.cpf; // o CPF cru nunca vai para o HTML
+  res.render('account/perfil', { titulo: 'Meu perfil', perfil, cpfMascarado, erros: {} });
 }));
 
 accountRouter.post('/minha-conta/perfil', requireAuth, asyncHandler(async (req, res) => {
-  const erros = validate({ nome: [required('Nome')] }, req.body);
+  const erros = validate({ nome: [required('Nome')], cpf: [isCPF()] }, req.body);
   if (hasErrors(erros)) {
-    const perfil = { ...await Users.findById(req.session.usuario.id), ...req.body };
-    return res.status(422).render('account/perfil', { titulo: 'Meu perfil', perfil, erros });
+    const atual = await Users.findById(req.session.usuario.id);
+    const perfil = { email: atual.email, nome: req.body.nome, telefone: req.body.telefone };
+    return res.status(422).render('account/perfil', {
+      titulo: 'Meu perfil', perfil, cpfMascarado: maskCpf(atual.cpf), erros,
+    });
   }
   await Users.updateProfile(req.session.usuario.id, req.body);
   req.flash('sucesso', 'Perfil atualizado.');

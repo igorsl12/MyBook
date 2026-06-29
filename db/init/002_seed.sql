@@ -11,9 +11,11 @@ INSERT INTO usuarios (email, senha_hash, papel) VALUES
   ('admin@mybook.com.br',  '$2b$10$3fKCKNp0cUq8C/5Q/76y5uKHD/Q.NqtPYtCRD/o2DXdx3HA5mHtMS', 'admin'),
   ('leitor@mybook.com.br', '$2b$10$25oFQDoKIFbLBgulmvnOSueKRvseVK8lNRpiu7.fOcQceQr9Qlbp6', 'cliente');
 
+-- CPF fica NULL no seed: é dado sensível e só é gravado cifrado em runtime
+-- (com a ENCRYPTION_KEY da aplicação), nunca em texto puro no seed.
 INSERT INTO perfis (usuario_id, nome, telefone, cpf) VALUES
   (1, 'Administração MyBook', '(11) 90000-0000', NULL),
-  (2, 'Ana Leitora',          '(11) 98888-7777', '123.456.789-00');
+  (2, 'Ana Leitora',          '(11) 98888-7777', NULL);
 
 INSERT INTO enderecos (usuario_id, cep, logradouro, numero, complemento, bairro, cidade, uf, padrao) VALUES
   (2, '01310-100', 'Av. Paulista', '1000', 'Apto 51', 'Bela Vista', 'São Paulo', 'SP', true);

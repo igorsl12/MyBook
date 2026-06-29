@@ -15,10 +15,21 @@ export const env = {
   // (ex.: `docker compose up` local em http://localhost), senão o navegador
   // tenta forçar https e a página não carrega.
   forceHttps: process.env.FORCE_HTTPS === 'true',
+  // Chave para criptografia de dados sensíveis em repouso (CPF). Hex de 64 chars
+  // (32 bytes) ou frase longa (derivada via scrypt). Obrigatória em produção.
+  encryptionKey: process.env.ENCRYPTION_KEY ?? 'dev-only-encryption-key-troque-em-producao',
+  // TLS na conexão com o Postgres (managed DBs costumam exigir). DB_SSL=true.
+  dbSsl: process.env.DB_SSL === 'true',
 };
 
-// Em produção, aborta se o segredo de sessão for o default ou fraco (< 32 chars).
-if (env.isProd && (env.sessionSecret === 'dev-only-troque-em-producao' || env.sessionSecret.length < 32)) {
-  throw new Error(
-    'SESSION_SECRET ausente ou fraco em produção (defina um valor aleatório com ≥ 32 caracteres no .env).');
+// Em produção, aborta se os segredos forem o default ou fracos.
+if (env.isProd) {
+  if (env.sessionSecret === 'dev-only-troque-em-producao' || env.sessionSecret.length < 32) {
+    throw new Error(
+      'SESSION_SECRET ausente ou fraco em produção (defina um valor aleatório com ≥ 32 caracteres no .env).');
+  }
+  if (env.encryptionKey.startsWith('dev-only') || env.encryptionKey.length < 32) {
+    throw new Error(
+      'ENCRYPTION_KEY ausente ou fraca em produção (gere 32 bytes: openssl rand -hex 32).');
+  }
 }
