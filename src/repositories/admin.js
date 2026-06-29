@@ -156,16 +156,29 @@ export async function criarAutor(d) {
   await query('INSERT INTO autores (nome, slug, bio, foto_url) VALUES ($1,$2,$3,$4)',
     [d.nome.trim(), slugify(d.nome), d.bio?.trim() || null, d.foto_url?.trim() || null]);
 }
+export async function atualizarAutor(id, d) {
+  await query('UPDATE autores SET nome=$2, slug=$3, bio=COALESCE($4, bio), foto_url=COALESCE($5, foto_url) WHERE id=$1',
+    [id, d.nome.trim(), slugify(d.nome), d.bio?.trim() || null, d.foto_url?.trim() || null]);
+}
 export async function removerAutor(id) { await query('DELETE FROM autores WHERE id=$1', [id]); }
 
 export async function criarEditora(d) {
   await query('INSERT INTO editoras (nome, slug) VALUES ($1,$2)', [d.nome.trim(), slugify(d.nome)]);
+}
+export async function atualizarEditora(id, d) {
+  await query('UPDATE editoras SET nome=$2, slug=$3 WHERE id=$1', [id, d.nome.trim(), slugify(d.nome)]);
 }
 export async function removerEditora(id) { await query('DELETE FROM editoras WHERE id=$1', [id]); }
 
 export async function criarCategoria(d) {
   await query('INSERT INTO categorias (nome, slug, parent_id) VALUES ($1,$2,$3)',
     [d.nome.trim(), slugify(d.nome), d.parent_id ? parseInt(d.parent_id, 10) : null]);
+}
+export async function atualizarCategoria(id, d) {
+  // Evita que a categoria seja pai de si mesma.
+  const parent = d.parent_id ? parseInt(d.parent_id, 10) : null;
+  await query('UPDATE categorias SET nome=$2, slug=$3, parent_id=$4 WHERE id=$1',
+    [id, d.nome.trim(), slugify(d.nome), parent === id ? null : parent]);
 }
 export async function removerCategoria(id) { await query('DELETE FROM categorias WHERE id=$1', [id]); }
 

@@ -96,11 +96,21 @@ adminRouter.post('/admin/autores', asyncHandler(async (req, res) => {
   if (req.body.nome?.trim()) await Admin.criarAutor(req.body);
   res.redirect('/admin/catalogo');
 }));
+adminRouter.post('/admin/autores/:id/editar', asyncHandler(async (req, res) => {
+  if (req.body.nome?.trim()) await Admin.atualizarAutor(parseInt(req.params.id, 10), req.body);
+  req.flash('sucesso', 'Autor atualizado.');
+  res.redirect('/admin/catalogo');
+}));
 adminRouter.post('/admin/autores/:id/remover', asyncHandler(async (req, res) => {
   await Admin.removerAutor(parseInt(req.params.id, 10)); res.redirect('/admin/catalogo');
 }));
 adminRouter.post('/admin/editoras', asyncHandler(async (req, res) => {
   if (req.body.nome?.trim()) await Admin.criarEditora(req.body);
+  res.redirect('/admin/catalogo');
+}));
+adminRouter.post('/admin/editoras/:id/editar', asyncHandler(async (req, res) => {
+  if (req.body.nome?.trim()) await Admin.atualizarEditora(parseInt(req.params.id, 10), req.body);
+  req.flash('sucesso', 'Editora atualizada.');
   res.redirect('/admin/catalogo');
 }));
 adminRouter.post('/admin/editoras/:id/remover', asyncHandler(async (req, res) => {
@@ -109,6 +119,12 @@ adminRouter.post('/admin/editoras/:id/remover', asyncHandler(async (req, res) =>
 adminRouter.post('/admin/categorias', asyncHandler(async (req, res) => {
   if (req.body.nome?.trim()) await Admin.criarCategoria(req.body);
   invalidarCacheCategorias();
+  res.redirect('/admin/catalogo');
+}));
+adminRouter.post('/admin/categorias/:id/editar', asyncHandler(async (req, res) => {
+  if (req.body.nome?.trim()) await Admin.atualizarCategoria(parseInt(req.params.id, 10), req.body);
+  invalidarCacheCategorias();
+  req.flash('sucesso', 'Categoria atualizada.');
   res.redirect('/admin/catalogo');
 }));
 adminRouter.post('/admin/categorias/:id/remover', asyncHandler(async (req, res) => {

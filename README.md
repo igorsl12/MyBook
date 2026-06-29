@@ -33,11 +33,15 @@ A loja fica disponível em **http://localhost:3000**
 ## Scripts
 
 ```bash
-npm start          # produção (node src/server.js)
-npm run dev        # desenvolvimento com --watch
-npm test           # testes unitários (lógica pura: dinheiro, frete, cupom, slug…)
-npm run db:reset   # recria o banco do zero (APAGA o volume e roda schema+seed)
+npm start                # produção (node src/server.js)
+npm run dev              # desenvolvimento com --watch
+npm test                 # testes unitários (lógica pura: dinheiro, frete, cupom, slug…)
+npm run test:integration # testes de integração (requer Postgres com schema+seed; usa DB_*)
+npm run db:reset         # recria o banco do zero (APAGA o volume e roda schema+seed)
 ```
+
+O fluxo de compra ponta a ponta pode ser validado por HTTP com o app no ar:
+`BASE=http://localhost:3000 bash scripts/e2e-smoke.sh`.
 
 O painel administrativo fica em **/admin** (acesse com o usuário admin do seed).
 SEO básico: `robots.txt`, `sitemap.xml` dinâmico, Open Graph e JSON-LD nos livros.

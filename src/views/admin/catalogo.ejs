@@ -9,9 +9,14 @@
     <h2>Autores</h2>
     <ul class="admin-list">
       <% autores.forEach(function(a){ %>
-        <li><span><%= a.nome %></span>
+        <li class="admin-list-item">
+          <form action="/admin/autores/<%= a.id %>/editar" method="post" class="admin-edit">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input class="form-control" name="nome" value="<%= a.nome %>" aria-label="Nome do autor">
+            <button class="btn btn-ghost" type="submit" title="Salvar">💾</button>
+          </form>
           <form action="/admin/autores/<%= a.id %>/remover" method="post" data-confirm="Remover este autor?">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">✕</button>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit" title="Remover">✕</button>
           </form>
         </li>
       <% }) %>
@@ -28,9 +33,14 @@
     <h2>Editoras</h2>
     <ul class="admin-list">
       <% editoras.forEach(function(e){ %>
-        <li><span><%= e.nome %></span>
+        <li class="admin-list-item">
+          <form action="/admin/editoras/<%= e.id %>/editar" method="post" class="admin-edit">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input class="form-control" name="nome" value="<%= e.nome %>" aria-label="Nome da editora">
+            <button class="btn btn-ghost" type="submit" title="Salvar">💾</button>
+          </form>
           <form action="/admin/editoras/<%= e.id %>/remover" method="post" data-confirm="Remover esta editora?">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">✕</button>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit" title="Remover">✕</button>
           </form>
         </li>
       <% }) %>
@@ -47,9 +57,20 @@
     <h2>Categorias</h2>
     <ul class="admin-list">
       <% categorias.forEach(function(c){ %>
-        <li><span><%= c.nome %><% if (c.parent_id) { %> <small class="muted">(sub)</small><% } %></span>
+        <li class="admin-list-item">
+          <form action="/admin/categorias/<%= c.id %>/editar" method="post" class="admin-edit admin-edit-cat">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input class="form-control" name="nome" value="<%= c.nome %>" aria-label="Nome da categoria">
+            <select class="form-control" name="parent_id" aria-label="Categoria-pai">
+              <option value="">— raiz —</option>
+              <% categorias.filter(p => !p.parent_id && p.id !== c.id).forEach(function(p){ %>
+                <option value="<%= p.id %>" <%= c.parent_id === p.id ? 'selected' : '' %>><%= p.nome %></option>
+              <% }) %>
+            </select>
+            <button class="btn btn-ghost" type="submit" title="Salvar">💾</button>
+          </form>
           <form action="/admin/categorias/<%= c.id %>/remover" method="post" data-confirm="Remover esta categoria?">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit">✕</button>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost" type="submit" title="Remover">✕</button>
           </form>
         </li>
       <% }) %>
