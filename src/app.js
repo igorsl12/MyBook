@@ -42,11 +42,12 @@ export function createApp() {
         formAction: ["'self'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
-        // null remove a diretiva padrão do helmet quando não estamos em produção.
-        ...(env.isProd ? {} : { upgradeInsecureRequests: null }),
+        // upgrade-insecure-requests só quando explicitamente atrás de HTTPS;
+        // null remove a diretiva padrão do helmet caso contrário.
+        ...(env.forceHttps ? {} : { upgradeInsecureRequests: null }),
       },
     },
-    hsts: env.isProd,
+    hsts: env.forceHttps,
   }));
 
   // View engine (EJS) + diretório de views.
@@ -73,7 +74,10 @@ export function createApp() {
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: env.isProd,
+      // 'auto' + trust proxy: cookie só vira "secure" quando a conexão é HTTPS
+      // (direto ou via X-Forwarded-Proto). Funciona tanto em http://localhost
+      // quanto atrás de um proxy TLS, sem quebrar a sessão.
+      secure: 'auto',
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 dias
     },
   }));

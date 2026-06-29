@@ -13,3 +13,9 @@ README.md
 .idea
 coverage
 dist
+# Mídias enviadas em runtime — nunca devem ir para a imagem.
+public/uploads
+# Ambientes/saídas locais que não pertencem à imagem.
+.venv
+preview
+*.log

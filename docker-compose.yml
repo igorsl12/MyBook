@@ -10,6 +10,9 @@ services:
       PORT: 3000
       SESSION_SECRET: ${SESSION_SECRET:?defina SESSION_SECRET no .env}
       FRETE_GRATIS_ACIMA: ${FRETE_GRATIS_ACIMA:-150}
+      # Deixe false para acesso local em http://localhost. Em produção atrás de
+      # HTTPS (proxy/LB com TLS), defina FORCE_HTTPS=true no .env.
+      FORCE_HTTPS: ${FORCE_HTTPS:-false}
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${DB_USER:-livraria}

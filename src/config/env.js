@@ -10,6 +10,11 @@ export const env = {
   freteGratisAcima: Number(process.env.FRETE_GRATIS_ACIMA ?? 150),
   // URL pública canônica (evita host header injection em sitemap/robots). Opcional.
   siteUrl: process.env.SITE_URL || null,
+  // Ative SÓ quando servir atrás de HTTPS (proxy/Load Balancer com TLS). Liga
+  // HSTS e upgrade-insecure-requests. Mantenha desligado para acesso via http://
+  // (ex.: `docker compose up` local em http://localhost), senão o navegador
+  // tenta forçar https e a página não carrega.
+  forceHttps: process.env.FORCE_HTTPS === 'true',
 };
 
 if (env.isProd && env.sessionSecret === 'dev-only-troque-em-producao') {
