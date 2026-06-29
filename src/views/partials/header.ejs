@@ -10,12 +10,19 @@
     </form>
 
     <div class="nav-actions">
+      <%
+        // Link do carrinho (reutilizado). Para o usuário logado ele vem ANTES
+        // do "Sair", que deve ser sempre o último item à direita.
+      %>
       <% if (usuario) { %>
         <a class="nav-link" href="/minha-conta">Olá, <%= usuario.email.split('@')[0] %></a>
         <% if (usuario.papel === 'admin') { %>
           <a class="nav-link" href="/admin">Admin</a>
         <% } %>
         <a class="nav-link" href="/favoritos">Favoritos</a>
+        <a class="nav-link" href="/carrinho">
+          Carrinho<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount %></span><% } %>
+        </a>
         <form action="/sair" method="post" style="display:inline">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button class="btn-ghost btn" type="submit">Sair</button>
@@ -23,10 +30,10 @@
       <% } else { %>
         <a class="nav-link" href="/entrar">Entrar</a>
         <a class="nav-link" href="/cadastrar">Criar conta</a>
+        <a class="nav-link" href="/carrinho">
+          Carrinho<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount %></span><% } %>
+        </a>
       <% } %>
-      <a class="nav-link" href="/carrinho">
-        Carrinho<% if (cartCount > 0) { %><span class="cart-badge"><%= cartCount %></span><% } %>
-      </a>
     </div>
   </nav>
 

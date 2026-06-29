@@ -81,6 +81,17 @@
             <div class="form-group"><label for="cc-cvv">CVV</label><input class="form-control" id="cc-cvv" name="cartao_cvv" placeholder="123" inputmode="numeric" autocomplete="off"></div>
           </div>
         </div>
+
+        <!-- Cupom de desconto (pertence ao #cupom-form via atributo form=, para
+             não aninhar formulários dentro do form principal de checkout) -->
+        <div class="cupom-block">
+          <label for="cupom" class="form-help">Cupom de desconto</label>
+          <div class="cupom-row">
+            <input class="form-control" id="cupom" name="cupom" form="cupom-form" placeholder="Ex.: BEMVINDO10" value="<%= cupom ? cupom.codigo : '' %>" aria-label="Cupom de desconto">
+            <button class="btn btn-outline" type="submit" form="cupom-form">Aplicar</button>
+          </div>
+          <% if (cupom) { %><span class="form-help text-green">Cupom <%= cupom.codigo %> aplicado ✓</span><% } %>
+        </div>
       </section>
     </div>
 
@@ -107,11 +118,7 @@
 <!-- Form auxiliar para trocar o endereço selecionado (recalcula o frete) -->
 <form id="sel-form" action="/checkout/selecionar" method="post" hidden><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form>
 
-<!-- Cupom -->
-<form action="/checkout/cupom" method="post" class="cupom-form">
-  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <input class="form-control" name="cupom" placeholder="Cupom de desconto" value="<%= cupom ? cupom.codigo : '' %>" aria-label="Cupom de desconto">
-  <button class="btn btn-outline" type="submit">Aplicar</button>
-</form>
+<!-- Form do cupom (vazio; os controles ficam na seção de pagamento via form=) -->
+<form id="cupom-form" action="/checkout/cupom" method="post" hidden><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form>
 
 <%- include('../partials/footer') %>

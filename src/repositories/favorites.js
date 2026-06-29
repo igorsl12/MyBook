@@ -31,7 +31,7 @@ export async function listByUser(usuarioId) {
      LEFT JOIN livros_autores la ON la.livro_id = l.id
      LEFT JOIN autores a ON a.id = la.autor_id
      WHERE f.usuario_id = $1
-     GROUP BY l.id, e.nome
+     GROUP BY l.id, e.nome, f.criado_em
      ORDER BY f.criado_em DESC`,
     [usuarioId],
   );
