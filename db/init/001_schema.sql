@@ -170,9 +170,10 @@ CREATE TABLE cupons (
 CREATE TABLE pedidos (
   id                SERIAL PRIMARY KEY,
   usuario_id        INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
-  status            VARCHAR(20) NOT NULL DEFAULT 'pendente'
+  status            VARCHAR(24) NOT NULL DEFAULT 'pendente'
                       CHECK (status IN ('pendente','pago','separacao',
-                                        'enviado','entregue','cancelado')),
+                                        'enviado','entregue','cancelado',
+                                        'reembolso_solicitado','reembolsado')),
   subtotal          NUMERIC(10,2) NOT NULL CHECK (subtotal >= 0),
   frete             NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (frete >= 0),
   desconto          NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (desconto >= 0),
@@ -215,6 +216,16 @@ CREATE TABLE avaliacoes (
   UNIQUE (livro_id, usuario_id)
 );
 CREATE INDEX idx_avaliacoes_livro ON avaliacoes(livro_id);
+
+-- Mídias (fotos/vídeos) anexadas a uma avaliação.
+CREATE TABLE avaliacao_midias (
+  id           SERIAL PRIMARY KEY,
+  avaliacao_id INTEGER NOT NULL REFERENCES avaliacoes(id) ON DELETE CASCADE,
+  tipo         VARCHAR(8) NOT NULL CHECK (tipo IN ('foto', 'video')),
+  url          VARCHAR(500) NOT NULL,
+  criado_em    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_avaliacao_midias_avaliacao ON avaliacao_midias(avaliacao_id);
 
 CREATE TABLE favoritos (
   usuario_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,

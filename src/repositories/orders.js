@@ -110,9 +110,24 @@ export async function findById(id) {
   const pedido = rows[0];
   if (!pedido) return null;
   const itens = await query(
-    'SELECT * FROM itens_pedido WHERE pedido_id = $1 ORDER BY id', [id]);
+    `SELECT ip.*, l.slug AS livro_slug
+     FROM itens_pedido ip LEFT JOIN livros l ON l.id = ip.livro_id
+     WHERE ip.pedido_id = $1 ORDER BY ip.id`, [id]);
   pedido.itens = itens.rows;
   return pedido;
+}
+
+/**
+ * Cliente solicita reembolso: só permitido no próprio pedido e quando 'entregue'.
+ * Retorna true se mudou o status.
+ */
+export async function solicitarReembolso(id, usuarioId) {
+  const { rowCount } = await query(
+    `UPDATE pedidos SET status = 'reembolso_solicitado'
+     WHERE id = $1 AND usuario_id = $2 AND status = 'entregue'`,
+    [id, usuarioId],
+  );
+  return rowCount > 0;
 }
 
 export async function listByUser(usuarioId) {

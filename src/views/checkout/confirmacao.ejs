@@ -4,11 +4,15 @@
 <%
   const pag = pedido.pagamento_json || {};
   const end = pedido.endereco_json || {};
+  const ehDono = typeof dono !== 'undefined' ? dono : false;
+  const jaAvaliados = typeof avaliados !== 'undefined' ? avaliados : new Set();
+  const podeAvaliar = ehDono && ['pago','separacao','enviado','entregue','reembolso_solicitado','reembolsado'].includes(pedido.status);
+  const podeReembolso = ehDono && pedido.status === 'entregue';
 %>
 
 <div class="confirm-hero">
-  <div class="confirm-check" aria-hidden="true">✓</div>
-  <h1>Pedido #<%= pedido.id %> confirmado</h1>
+  <div class="confirm-check" aria-hidden="true"><%= pedido.status === 'cancelado' || pedido.status === 'reembolsado' ? '↩' : '✓' %></div>
+  <h1>Pedido #<%= pedido.id %></h1>
   <p class="muted">Status: <span class="badge badge-<%= statusCor(pedido.status) %>"><%= statusLabel(pedido.status) %></span></p>
 </div>
 
@@ -51,6 +55,43 @@
     </p>
   </aside>
 </div>
+
+<% if (ehDono && (podeAvaliar || podeReembolso || pedido.status === 'reembolso_solicitado' || pedido.status === 'reembolsado')) { %>
+<section class="card" style="margin-top:1.25rem">
+  <h2>Seus produtos</h2>
+
+  <% if (pedido.status === 'reembolso_solicitado') { %>
+    <div class="alert alert-aviso">Reembolso em análise pela nossa equipe. Avisaremos assim que for processado.</div>
+  <% } else if (pedido.status === 'reembolsado') { %>
+    <div class="alert alert-erro">Este pedido foi reembolsado.</div>
+  <% } %>
+
+  <ul class="produto-actions">
+    <% pedido.itens.forEach(function(it){ %>
+      <li>
+        <span><%= it.titulo %></span>
+        <span class="produto-action-btns">
+          <% if (podeAvaliar && it.livro_slug) { %>
+            <% if (jaAvaliados.has(it.livro_id)) { %>
+              <a class="btn btn-ghost" href="/livro/<%= it.livro_slug %>#avaliar">Avaliação ✓</a>
+            <% } else { %>
+              <a class="btn btn-outline" href="/livro/<%= it.livro_slug %>#avaliar">★ Avaliar</a>
+            <% } %>
+          <% } %>
+        </span>
+      </li>
+    <% }) %>
+  </ul>
+
+  <% if (podeReembolso) { %>
+    <form action="/pedido/<%= pedido.id %>/reembolso" method="post" data-confirm="Solicitar reembolso deste pedido entregue?" style="margin-top:1rem">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-outline" type="submit">↩ Solicitar reembolso</button>
+      <span class="form-help">Disponível porque o pedido foi entregue.</span>
+    </form>
+  <% } %>
+</section>
+<% } %>
 
 <div class="text-center" style="margin:2rem 0">
   <a class="btn btn-primary" href="/minha-conta/pedidos">Ver meus pedidos</a>

@@ -58,7 +58,7 @@ case "$LOC" in
 esac
 
 echo "== 5. Conta do usuário =="
-[ -n "$PEDIDO" ] && curl -s -b "$JAR" "$BASE$PEDIDO" | grep -q 'confirmado' && ok "confirmação do pedido" || no "confirmação"
+[ -n "$PEDIDO" ] && curl -s -b "$JAR" "$BASE$PEDIDO" | grep -q 'Pedido #' && ok "confirmação do pedido" || no "confirmação"
 curl -s -b "$JAR" "$BASE/minha-conta/pedidos" | grep -q 'Pago\|Aguardando' && ok "pedido no histórico da conta" || no "histórico"
 
 echo "== 6. Admin =="

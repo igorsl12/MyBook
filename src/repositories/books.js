@@ -107,13 +107,20 @@ export async function listRelacionados(livroId, limit = 4) {
   return presentAll(rows);
 }
 
-/** Avaliações de um livro, com o nome do autor da avaliação. */
+/** Avaliações de um livro, com autor e mídias (fotos/vídeos) anexadas. */
 export async function listAvaliacoes(livroId) {
   const { rows } = await query(
-    `SELECT av.nota, av.comentario, av.criado_em, COALESCE(p.nome, 'Leitor(a)') AS autor
+    `SELECT av.nota, av.comentario, av.criado_em,
+            COALESCE(p.nome, 'Leitor(a)') AS autor,
+            COALESCE(
+              json_agg(json_build_object('tipo', m.tipo, 'url', m.url) ORDER BY m.id)
+                FILTER (WHERE m.id IS NOT NULL), '[]'
+            ) AS midias
      FROM avaliacoes av
      LEFT JOIN perfis p ON p.usuario_id = av.usuario_id
+     LEFT JOIN avaliacao_midias m ON m.avaliacao_id = av.id
      WHERE av.livro_id = $1
+     GROUP BY av.id, p.nome
      ORDER BY av.criado_em DESC`,
     [livroId],
   );

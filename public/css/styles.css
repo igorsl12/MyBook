@@ -277,6 +277,14 @@ img { max-width: 100%; display: block; }
 
 .reviews { list-style: none; padding: 0; display: grid; gap: 1rem; max-width: 70ch; }
 .review-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .4rem; }
+.review-media { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.review-media img, .review-media video { width: 120px; height: 120px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #000; }
+.review-media a { line-height: 0; }
+
+.produto-actions { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.produto-actions li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .5rem 0; border-bottom: 1px solid var(--line); }
+.produto-actions li:last-child { border-bottom: none; }
+.produto-action-btns { display: flex; gap: .4rem; }
 
 @media (max-width: 900px) {
   .catalog-layout { grid-template-columns: 1fr; }

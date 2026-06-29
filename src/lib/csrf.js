@@ -13,7 +13,9 @@ export function csrf(req, res, next) {
 
   const mutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
   if (mutating) {
-    const sent = req.body?._csrf || req.headers['x-csrf-token'];
+    // body (urlencoded), query (?_csrf= — usado por forms multipart cujo corpo
+    // ainda não foi parseado neste ponto) ou header.
+    const sent = req.body?._csrf || req.query?._csrf || req.headers['x-csrf-token'];
     if (!validoConstantTime(sent, req.session.csrfToken)) {
       res.status(403);
       return next(new Error('Token CSRF inválido. Recarregue a página e tente novamente.'));

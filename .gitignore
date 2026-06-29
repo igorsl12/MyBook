@@ -12,3 +12,6 @@ preview/
 
 # Logs locais
 *.log
+
+# Uploads de mídia (avaliações)
+public/uploads/

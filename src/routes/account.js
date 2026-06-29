@@ -7,6 +7,7 @@ import * as Orders from '../repositories/orders.js';
 import * as Favorites from '../repositories/favorites.js';
 import * as Reviews from '../repositories/reviews.js';
 import { query } from '../db.js';
+import { uploadReviewMedia, tipoDeMime } from '../lib/upload.js';
 import {
   validate, required, isCEP, isUF, hasErrors,
 } from '../lib/validate.js';
@@ -34,7 +35,9 @@ accountRouter.get('/favoritos', requireAuth, asyncHandler(async (req, res) => {
 }));
 
 // ---- Avaliações ----
-accountRouter.post('/livro/:slug/avaliar', requireAuth, asyncHandler(async (req, res) => {
+// Recebe form multipart (com fotos/vídeos). O _csrf vai na query string porque
+// o corpo multipart ainda não está parseado quando o middleware de CSRF roda.
+accountRouter.post('/livro/:slug/avaliar', requireAuth, uploadReviewMedia, asyncHandler(async (req, res) => {
   const l = await query('SELECT id, slug FROM livros WHERE slug = $1', [req.params.slug]);
   const livro = l.rows[0];
   if (!livro) return res.status(404).render('errors/404', { titulo: 'Livro não encontrado' });
@@ -49,8 +52,20 @@ accountRouter.post('/livro/:slug/avaliar', requireAuth, asyncHandler(async (req,
     req.flash('erro', 'Selecione uma nota de 1 a 5.');
     return res.redirect(`/livro/${livro.slug}`);
   }
-  await Reviews.upsert(req.session.usuario.id, livro.id, nota, req.body.comentario);
-  req.flash('sucesso', 'Avaliação registrada. Obrigado!');
+  const avaliacaoId = await Reviews.upsert(
+    req.session.usuario.id, livro.id, nota, req.body.comentario);
+
+  // Anexa as mídias enviadas (já validadas por tipo/tamanho no multer).
+  const arquivos = req.files ?? [];
+  if (arquivos.length) {
+    const midias = arquivos.map((f) => ({
+      tipo: tipoDeMime(f.mimetype),
+      url: `/static/uploads/reviews/${f.filename}`,
+    }));
+    await Reviews.adicionarMidias(avaliacaoId, midias);
+  }
+  req.flash('sucesso',
+    arquivos.length ? 'Avaliação registrada com mídia. Obrigado!' : 'Avaliação registrada. Obrigado!');
   res.redirect(`/livro/${livro.slug}`);
 }));
 
