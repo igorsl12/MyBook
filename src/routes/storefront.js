@@ -50,8 +50,11 @@ storefrontRouter.get('/sitemap.xml', asyncHandler(async (req, res) => {
       lastmod: l.atualizado_em ? new Date(l.atualizado_em).toISOString().slice(0, 10) : undefined,
     })),
   ];
+  // Escapa o conteúdo (o host vem do header e pode ser forjado se SITE_URL não setado).
+  const esc = (s) => String(s).replace(/[<>&'"]/g, (c) =>
+    ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${
-    urls.map((u) => `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.prio}</priority></url>`).join('\n')
+    urls.map((u) => `  <url><loc>${esc(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<priority>${u.prio}</priority></url>`).join('\n')
   }\n</urlset>`;
   res.type('application/xml').send(xml);
 }));

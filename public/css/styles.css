@@ -353,7 +353,7 @@ img { max-width: 100%; display: block; }
 .confirm-check { width: 64px; height: 64px; border-radius: 50%; background: var(--green); color: #fff; font-size: 2rem; display: grid; place-items: center; margin: 0 auto 1rem; }
 .confirm-layout { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
 .qr-box { width: fit-content; padding: .75rem; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); margin: .75rem 0; }
-.qr-box svg { width: 168px; height: 168px; display: block; }
+.qr-box svg, .qr-box img { width: 168px; height: 168px; display: block; }
 
 @media (max-width: 860px) {
   .cart-layout, .checkout-layout, .confirm-layout { grid-template-columns: 1fr; }

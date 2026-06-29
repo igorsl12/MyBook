@@ -153,8 +153,9 @@ adminRouter.post('/admin/pedidos/:id/status', asyncHandler(async (req, res) => {
   const pedido = await Orders.findById(id);
   const permitidas = TRANSICOES[pedido?.status] ?? [];
   if (pedido && permitidas.includes(req.body.status)) {
-    await Admin.atualizarStatusPedido(id, req.body.status);
-    req.flash('sucesso', 'Status atualizado.');
+    const ok = await Admin.atualizarStatusPedido(id, req.body.status, pedido.status);
+    req.flash(ok ? 'sucesso' : 'erro',
+      ok ? 'Status atualizado.' : 'O status mudou enquanto isso — recarregue a página.');
   } else {
     req.flash('erro', 'Transição de status inválida.');
   }

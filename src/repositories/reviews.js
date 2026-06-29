@@ -36,6 +36,18 @@ export async function adicionarMidias(avaliacaoId, midias) {
   }
 }
 
+/** URLs das mídias atuais de uma avaliação (para apagar os arquivos antigos). */
+export async function listarMidias(avaliacaoId) {
+  const { rows } = await query(
+    'SELECT url FROM avaliacao_midias WHERE avaliacao_id = $1', [avaliacaoId]);
+  return rows.map((r) => r.url);
+}
+
+/** Remove os registros de mídia de uma avaliação. */
+export async function excluirMidias(avaliacaoId) {
+  await query('DELETE FROM avaliacao_midias WHERE avaliacao_id = $1', [avaliacaoId]);
+}
+
 /** Livros que o usuário pode avaliar e ainda não avaliou (para a área da conta). */
 export async function pendentesDeAvaliacao(usuarioId) {
   const { rows } = await query(

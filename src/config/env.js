@@ -17,6 +17,8 @@ export const env = {
   forceHttps: process.env.FORCE_HTTPS === 'true',
 };
 
-if (env.isProd && env.sessionSecret === 'dev-only-troque-em-producao') {
-  console.warn('[AVISO] SESSION_SECRET não definido em produção — defina no .env!');
+// Em produção, aborta se o segredo de sessão for o default ou fraco (< 32 chars).
+if (env.isProd && (env.sessionSecret === 'dev-only-troque-em-producao' || env.sessionSecret.length < 32)) {
+  throw new Error(
+    'SESSION_SECRET ausente ou fraco em produção (defina um valor aleatório com ≥ 32 caracteres no .env).');
 }

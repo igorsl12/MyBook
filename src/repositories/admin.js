@@ -200,8 +200,12 @@ export async function listPedidos() {
   return rows;
 }
 
-export async function atualizarStatusPedido(id, novoStatus) {
-  await query('UPDATE pedidos SET status = $2 WHERE id = $1', [id, novoStatus]);
+// Transição atômica: só muda se o status atual ainda for o esperado (anti-TOCTOU).
+export async function atualizarStatusPedido(id, novoStatus, statusAtual) {
+  const { rowCount } = await query(
+    'UPDATE pedidos SET status = $2 WHERE id = $1 AND status = $3',
+    [id, novoStatus, statusAtual]);
+  return rowCount > 0;
 }
 
 // ---------------------------------------------------------------------------

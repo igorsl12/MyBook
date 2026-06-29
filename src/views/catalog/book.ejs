@@ -101,7 +101,7 @@
   <h2>Avaliações</h2>
 
   <% if (typeof podeAvaliar !== 'undefined' && podeAvaliar) { %>
-    <form class="card review-form" action="/livro/<%= livro.slug %>/avaliar?_csrf=<%= csrfToken %>" method="post" enctype="multipart/form-data">
+    <form class="card review-form" action="/livro/<%= livro.slug %>/avaliar" method="post" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <h3>Avalie este livro</h3>
       <div class="form-group">

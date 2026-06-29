@@ -13,10 +13,13 @@ export function csrf(req, res, next) {
 
   const mutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
   if (mutating) {
-    // body (urlencoded), query (?_csrf= — usado por forms multipart cujo corpo
-    // ainda não foi parseado neste ponto) ou header.
-    const sent = req.body?._csrf || req.query?._csrf || req.headers['x-csrf-token'];
-    if (!validoConstantTime(sent, req.session.csrfToken)) {
+    // Requisições multipart (uploads) têm o corpo parseado depois, pela rota
+    // (multer) — então validam o CSRF lá, via tokenValido(). Não usamos o token
+    // na query string (evita vazá-lo em logs de acesso).
+    if (req.is('multipart/form-data')) return next();
+
+    const sent = req.body?._csrf || req.headers['x-csrf-token'];
+    if (!tokenValido(req, sent)) {
       res.status(403);
       return next(new Error('Token CSRF inválido. Recarregue a página e tente novamente.'));
     }
@@ -24,8 +27,10 @@ export function csrf(req, res, next) {
   next();
 }
 
-// Comparação em tempo constante (evita timing oracle).
-function validoConstantTime(sent, expected) {
+// Validação em tempo constante do token enviado contra o da sessão.
+// Exportada para rotas multipart validarem após o multer parsear o corpo.
+export function tokenValido(req, sent) {
+  const expected = req.session?.csrfToken;
   if (!sent || !expected) return false;
   const a = Buffer.from(String(sent), 'utf8');
   const b = Buffer.from(String(expected), 'utf8');

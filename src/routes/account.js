@@ -1,18 +1,43 @@
+import path from 'node:path';
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { asyncHandler } from '../lib/asyncHandler.js';
 import { requireAuth } from '../middleware/auth.js';
+import { tokenValido } from '../lib/csrf.js';
 import * as Users from '../repositories/users.js';
 import * as Addresses from '../repositories/addresses.js';
 import * as Orders from '../repositories/orders.js';
 import * as Favorites from '../repositories/favorites.js';
 import * as Reviews from '../repositories/reviews.js';
 import { query } from '../db.js';
-import { uploadReviewMedia, tipoDeMime } from '../lib/upload.js';
+import {
+  uploadReviewMedia, sniffTipo, removerArquivos, REVIEW_DIR,
+} from '../lib/upload.js';
 import {
   validate, required, isCEP, isUF, hasErrors,
 } from '../lib/validate.js';
 
 export const accountRouter = Router();
+
+// Limita submissões de avaliação (anti-DoS de disco / spam).
+const reviewLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false,
+  message: 'Muitas avaliações em pouco tempo. Tente novamente mais tarde.',
+});
+
+// Pré-autorização ANTES do multer: garante que o usuário comprou o livro antes
+// de qualquer arquivo ser gravado em disco (evita upload por quem não pode avaliar).
+const autorizarAvaliacao = asyncHandler(async (req, res, next) => {
+  const l = await query('SELECT id, slug FROM livros WHERE slug = $1', [req.params.slug]);
+  const livro = l.rows[0];
+  if (!livro) return res.status(404).render('errors/404', { titulo: 'Livro não encontrado' });
+  if (!await Reviews.podeAvaliar(req.session.usuario.id, livro.id)) {
+    req.flash('erro', 'Você só pode avaliar livros que comprou.');
+    return res.redirect(`/livro/${livro.slug}`);
+  }
+  req.livro = livro;
+  next();
+});
 
 function safeBack(value, fallback) {
   return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
@@ -34,40 +59,54 @@ accountRouter.get('/favoritos', requireAuth, asyncHandler(async (req, res) => {
   res.render('account/favoritos', { titulo: 'Meus favoritos', livros });
 }));
 
-// ---- Avaliações ----
-// Recebe form multipart (com fotos/vídeos). O _csrf vai na query string porque
-// o corpo multipart ainda não está parseado quando o middleware de CSRF roda.
-accountRouter.post('/livro/:slug/avaliar', requireAuth, uploadReviewMedia, asyncHandler(async (req, res) => {
-  const l = await query('SELECT id, slug FROM livros WHERE slug = $1', [req.params.slug]);
-  const livro = l.rows[0];
-  if (!livro) return res.status(404).render('errors/404', { titulo: 'Livro não encontrado' });
+// ---- Avaliações (form multipart com fotos/vídeos) ----
+// Ordem: rate-limit → autoriza (antes do multer) → multer → handler.
+accountRouter.post('/livro/:slug/avaliar', requireAuth, reviewLimiter, autorizarAvaliacao,
+  uploadReviewMedia, asyncHandler(async (req, res) => {
+    const livro = req.livro;
+    const arquivos = req.files ?? [];
 
-  const pode = await Reviews.podeAvaliar(req.session.usuario.id, livro.id);
-  if (!pode) {
-    req.flash('erro', 'Você só pode avaliar livros que comprou.');
-    return res.redirect(`/livro/${livro.slug}`);
-  }
-  const nota = parseInt(req.body.nota, 10);
-  if (!(nota >= 1 && nota <= 5)) {
-    req.flash('erro', 'Selecione uma nota de 1 a 5.');
-    return res.redirect(`/livro/${livro.slug}`);
-  }
-  const avaliacaoId = await Reviews.upsert(
-    req.session.usuario.id, livro.id, nota, req.body.comentario);
+    // CSRF: o corpo multipart só existe aqui (após o multer); validamos o token
+    // do campo oculto _csrf (não usamos query string → não vaza em logs).
+    if (!tokenValido(req, req.body?._csrf)) {
+      removerArquivos(arquivos);
+      req.flash('erro', 'Sessão expirada. Recarregue a página e tente novamente.');
+      return res.redirect(`/livro/${livro.slug}`);
+    }
 
-  // Anexa as mídias enviadas (já validadas por tipo/tamanho no multer).
-  const arquivos = req.files ?? [];
-  if (arquivos.length) {
-    const midias = arquivos.map((f) => ({
-      tipo: tipoDeMime(f.mimetype),
-      url: `/static/uploads/reviews/${f.filename}`,
-    }));
-    await Reviews.adicionarMidias(avaliacaoId, midias);
-  }
-  req.flash('sucesso',
-    arquivos.length ? 'Avaliação registrada com mídia. Obrigado!' : 'Avaliação registrada. Obrigado!');
-  res.redirect(`/livro/${livro.slug}`);
-}));
+    const nota = parseInt(req.body.nota, 10);
+    if (!(nota >= 1 && nota <= 5)) {
+      removerArquivos(arquivos);
+      req.flash('erro', 'Selecione uma nota de 1 a 5.');
+      return res.redirect(`/livro/${livro.slug}`);
+    }
+
+    // Defesa em profundidade: valida o conteúdo real (magic bytes); descarta o
+    // que não for imagem/vídeo de verdade (mesmo que o Content-Type minta).
+    const validas = [];
+    for (const f of arquivos) {
+      const tipo = sniffTipo(f.path);
+      if (tipo) validas.push({ tipo, url: `/static/uploads/reviews/${f.filename}`, path: f.path });
+      else removerArquivos([f]);
+    }
+
+    const avaliacaoId = await Reviews.upsert(
+      req.session.usuario.id, livro.id, nota, req.body.comentario);
+
+    // Substitui as mídias anteriores (apaga arquivos e registros antigos).
+    const antigas = await Reviews.listarMidias(avaliacaoId);
+    if (antigas.length) {
+      removerArquivos(antigas.map((u) => path.join(REVIEW_DIR, path.basename(u))));
+      await Reviews.excluirMidias(avaliacaoId);
+    }
+    if (validas.length) {
+      await Reviews.adicionarMidias(avaliacaoId, validas.map(({ tipo, url }) => ({ tipo, url })));
+    }
+
+    req.flash('sucesso',
+      validas.length ? 'Avaliação registrada com mídia. Obrigado!' : 'Avaliação registrada. Obrigado!');
+    res.redirect(`/livro/${livro.slug}`);
+  }));
 
 // ---- Minha conta (dashboard) ----
 accountRouter.get('/minha-conta', requireAuth, asyncHandler(async (req, res) => {

@@ -35,3 +35,34 @@ export const uploadReviewMedia = multer({
   fileFilter,
   limits: { fileSize: 20 * 1024 * 1024, files: 5 },
 }).array('midias', 5);
+
+// Defesa em profundidade: confere os "magic bytes" do arquivo já gravado, em vez
+// de confiar no Content-Type declarado pelo cliente. Retorna 'foto' | 'video' | null.
+export function sniffTipo(filePath) {
+  let fd;
+  const buf = Buffer.alloc(16);
+  try {
+    fd = fs.openSync(filePath, 'r');
+    fs.readSync(fd, buf, 0, 16, 0);
+  } catch {
+    return null;
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+  const hex = buf.toString('hex');
+  const ascii = buf.toString('latin1');
+  if (hex.startsWith('ffd8ff')) return 'foto';                       // jpg
+  if (hex.startsWith('89504e47')) return 'foto';                     // png
+  if (hex.startsWith('47494638')) return 'foto';                     // gif
+  if (ascii.startsWith('RIFF') && ascii.slice(8, 12) === 'WEBP') return 'foto'; // webp
+  if (ascii.slice(4, 8) === 'ftyp') return 'video';                  // mp4/mov
+  if (hex.startsWith('1a45dfa3')) return 'video';                    // webm/mkv
+  return null;
+}
+
+// Remove arquivos do disco (limpeza de uploads não autorizados/ inválidos).
+export function removerArquivos(files = []) {
+  for (const f of files) {
+    fs.unlink(f.path ?? path.join(REVIEW_DIR, f), () => {});
+  }
+}
