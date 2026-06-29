@@ -14,7 +14,8 @@ import {
 export const checkoutRouter = Router();
 checkoutRouter.use(requireAuth);
 
-// Monta o estado completo do checkout a partir da sessão + carrinho.
+// Monta o estado completo do checkout. O FRETE é derivado do endereço de
+// entrega selecionado (um único CEP, sem campo separado).
 async function montarEstado(req) {
   const cart = await Cart.resolveCart(req, { create: false });
   const { itens, subtotalCents, totalItens } = cart
@@ -24,11 +25,14 @@ async function montarEstado(req) {
   const co = req.session.checkout ?? {};
   const enderecos = await Addresses.listByUser(req.session.usuario.id);
 
-  // Frete (recalculado com o subtotal atual).
-  let frete = null;
-  if (co.cep) frete = calcularFrete(co.cep, subtotalCents);
+  // Endereço ativo: o escolhido, senão o padrão, senão o primeiro.
+  const enderecoId = co.enderecoId ?? (enderecos.find((e) => e.padrao)?.id ?? enderecos[0]?.id);
+  const endereco = enderecos.find((e) => e.id === enderecoId) ?? null;
 
-  // Cupom (revalidado com o subtotal atual).
+  // Frete calculado a partir do CEP do endereço selecionado.
+  const frete = endereco ? calcularFrete(endereco.cep, subtotalCents) : null;
+
+  // Cupom revalidado com o subtotal atual.
   let cupom = null;
   let descontoCents = 0;
   if (co.cupomCodigo) {
@@ -41,10 +45,8 @@ async function montarEstado(req) {
   const totalCents = Math.max(0, subtotalCents - descontoCents) + freteCents;
 
   return {
-    cart, itens, subtotalCents, totalItens, enderecos,
-    cep: co.cep ?? '', frete, cupom, descontoCents, freteCents, totalCents,
-    enderecoId: co.enderecoId ?? (enderecos.find((e) => e.padrao)?.id ?? enderecos[0]?.id),
-    metodo: co.metodo ?? 'pix',
+    cart, itens, subtotalCents, totalItens, enderecos, endereco, enderecoId,
+    frete, cupom, descontoCents, freteCents, totalCents, metodo: co.metodo ?? 'pix',
   };
 }
 
@@ -57,19 +59,15 @@ checkoutRouter.get('/checkout', asyncHandler(async (req, res) => {
   res.render('checkout/index', { titulo: 'Finalizar compra', ...estado, erros: {} });
 }));
 
-// Calcular frete por CEP.
-checkoutRouter.post('/checkout/frete', asyncHandler(async (req, res) => {
-  const erros = validate({ cep: [required('CEP'), isCEP()] }, req.body);
+// Seleciona o endereço de entrega (recalcula o frete ao recarregar).
+checkoutRouter.post('/checkout/selecionar', asyncHandler(async (req, res) => {
   req.session.checkout = req.session.checkout ?? {};
-  if (!hasErrors(erros)) {
-    req.session.checkout.cep = req.body.cep;
-  } else {
-    req.flash('erro', erros.cep);
-  }
+  if (req.body.endereco_id) req.session.checkout.enderecoId = parseInt(req.body.endereco_id, 10);
+  if (metodoValido(req.body.metodo)) req.session.checkout.metodo = req.body.metodo;
   res.redirect('/checkout');
 }));
 
-// Aplicar cupom.
+// Aplica cupom.
 checkoutRouter.post('/checkout/cupom', asyncHandler(async (req, res) => {
   const codigo = (req.body.cupom || '').trim();
   const cart = await Cart.resolveCart(req, { create: false });
@@ -86,7 +84,7 @@ checkoutRouter.post('/checkout/cupom', asyncHandler(async (req, res) => {
   res.redirect('/checkout');
 }));
 
-// Cadastrar novo endereço durante o checkout.
+// Cadastra novo endereço (vira o endereço de entrega selecionado).
 checkoutRouter.post('/checkout/endereco', asyncHandler(async (req, res) => {
   const erros = validate({
     cep: [required('CEP'), isCEP()],
@@ -106,12 +104,11 @@ checkoutRouter.post('/checkout/endereco', asyncHandler(async (req, res) => {
   const novo = await Addresses.create(req.session.usuario.id, req.body);
   req.session.checkout = req.session.checkout ?? {};
   req.session.checkout.enderecoId = novo.id;
-  if (!req.session.checkout.cep) req.session.checkout.cep = novo.cep;
   req.flash('sucesso', 'Endereço cadastrado.');
   res.redirect('/checkout');
 }));
 
-// Finalizar: cria o pedido (sandbox) de forma atômica.
+// Finaliza: cria o pedido (pagamento sandbox) de forma atômica.
 checkoutRouter.post('/checkout/finalizar', asyncHandler(async (req, res) => {
   const estado = await montarEstado(req);
 
@@ -119,14 +116,12 @@ checkoutRouter.post('/checkout/finalizar', asyncHandler(async (req, res) => {
     req.flash('aviso', 'Seu carrinho está vazio.');
     return res.redirect('/carrinho');
   }
-  const enderecoId = parseInt(req.body.endereco_id, 10) || estado.enderecoId;
-  const endereco = estado.enderecos.find((e) => e.id === enderecoId);
-  if (!endereco) {
+  if (!estado.endereco) {
     req.flash('erro', 'Selecione ou cadastre um endereço de entrega.');
     return res.redirect('/checkout');
   }
   if (!estado.frete) {
-    req.flash('erro', 'Calcule o frete informando seu CEP.');
+    req.flash('erro', 'Não foi possível calcular o frete para este endereço.');
     return res.redirect('/checkout');
   }
   const metodo = metodoValido(req.body.metodo) ? req.body.metodo : estado.metodo;
@@ -135,7 +130,7 @@ checkoutRouter.post('/checkout/finalizar', asyncHandler(async (req, res) => {
     return res.redirect('/checkout');
   }
 
-  // Processa pagamento sandbox/mock.
+  // Pagamento sandbox/mock (ponto de integração real isolado em services/payment.js).
   const pagamento = processarPagamento(metodo, req.body, estado.totalCents);
 
   try {
@@ -143,16 +138,16 @@ checkoutRouter.post('/checkout/finalizar', asyncHandler(async (req, res) => {
       usuarioId: req.session.usuario.id,
       cartId: estado.cart.id,
       endereco: {
-        cep: endereco.cep, logradouro: endereco.logradouro, numero: endereco.numero,
-        complemento: endereco.complemento, bairro: endereco.bairro,
-        cidade: endereco.cidade, uf: endereco.uf,
+        cep: estado.endereco.cep, logradouro: estado.endereco.logradouro,
+        numero: estado.endereco.numero, complemento: estado.endereco.complemento,
+        bairro: estado.endereco.bairro, cidade: estado.endereco.cidade, uf: estado.endereco.uf,
       },
       freteCents: estado.freteCents,
       metodoPagamento: metodo,
       pagamento,
       cupomCodigo: estado.cupom?.codigo ?? null,
     });
-    delete req.session.checkout; // limpa estado do checkout
+    delete req.session.checkout;
     req.flash('sucesso', 'Pedido criado com sucesso!');
     res.redirect(`/pedido/${pedido.id}`);
   } catch (err) {

@@ -9,14 +9,14 @@
   <div class="checkout-layout">
     <div class="checkout-main">
 
-      <!-- Etapa 1: Endereço -->
+      <!-- Etapa 1: Endereço de entrega (define também o frete) -->
       <section class="card checkout-step">
         <h2>1. Endereço de entrega</h2>
         <% if (enderecos.length) { %>
           <div class="address-list">
             <% enderecos.forEach(function(e){ %>
               <label class="address-option <%= enderecoId === e.id ? 'selected' : '' %>">
-                <input type="radio" name="endereco_id" value="<%= e.id %>" <%= enderecoId === e.id ? 'checked' : '' %>>
+                <input type="radio" name="endereco_id" value="<%= e.id %>" form="sel-form" data-autosubmit <%= enderecoId === e.id ? 'checked' : '' %>>
                 <span>
                   <strong><%= e.logradouro %>, <%= e.numero %></strong><% if (e.complemento) { %> — <%= e.complemento %><% } %><br>
                   <span class="muted"><%= e.bairro %>, <%= e.cidade %>/<%= e.uf %> · CEP <%= e.cep %></span>
@@ -25,7 +25,7 @@
             <% }) %>
           </div>
         <% } else { %>
-          <p class="muted">Você ainda não tem endereços salvos. Cadastre um abaixo.</p>
+          <p class="muted">Você ainda não tem endereços salvos. Cadastre um abaixo — digite o CEP e o restante é preenchido automaticamente.</p>
         <% } %>
 
         <details class="new-address" <%= enderecos.length === 0 ? 'open' : '' %>>
@@ -33,27 +33,24 @@
           <div class="new-address-form">
             <% const ne = typeof novoEndereco !== 'undefined' ? novoEndereco : {}; %>
             <div class="form-grid">
-              <div class="form-group"><label>CEP</label><input class="form-control" name="cep" aria-label="CEP" data-cep value="<%= ne.cep || '' %>" placeholder="00000-000"><% if (erros.cep) { %><div class="field-error"><%= erros.cep %></div><% } %></div>
-              <div class="form-group span2"><label>Logradouro</label><input class="form-control" name="logradouro" aria-label="Logradouro" value="<%= ne.logradouro || '' %>"><% if (erros.logradouro) { %><div class="field-error"><%= erros.logradouro %></div><% } %></div>
-              <div class="form-group"><label>Número</label><input class="form-control" name="numero" aria-label="Número" value="<%= ne.numero || '' %>"><% if (erros.numero) { %><div class="field-error"><%= erros.numero %></div><% } %></div>
-              <div class="form-group"><label>Complemento</label><input class="form-control" name="complemento" aria-label="Complemento" value="<%= ne.complemento || '' %>"></div>
-              <div class="form-group"><label>Bairro</label><input class="form-control" name="bairro" aria-label="Bairro" value="<%= ne.bairro || '' %>"><% if (erros.bairro) { %><div class="field-error"><%= erros.bairro %></div><% } %></div>
-              <div class="form-group"><label>Cidade</label><input class="form-control" name="cidade" aria-label="Cidade" value="<%= ne.cidade || '' %>"><% if (erros.cidade) { %><div class="field-error"><%= erros.cidade %></div><% } %></div>
-              <div class="form-group"><label>UF</label><input class="form-control" name="uf" aria-label="UF" maxlength="2" value="<%= ne.uf || '' %>"><% if (erros.uf) { %><div class="field-error"><%= erros.uf %></div><% } %></div>
+              <div class="form-group"><label for="ne-cep">CEP</label><input class="form-control" id="ne-cep" name="cep" data-cep aria-label="CEP" value="<%= ne.cep || '' %>" placeholder="00000-000" autocomplete="postal-code"><span class="form-help" data-cep-status></span><% if (erros.cep) { %><div class="field-error"><%= erros.cep %></div><% } %></div>
+              <div class="form-group span2"><label for="ne-logradouro">Logradouro</label><input class="form-control" id="ne-logradouro" name="logradouro" aria-label="Logradouro" value="<%= ne.logradouro || '' %>"><% if (erros.logradouro) { %><div class="field-error"><%= erros.logradouro %></div><% } %></div>
+              <div class="form-group"><label for="ne-numero">Número</label><input class="form-control" id="ne-numero" name="numero" aria-label="Número" value="<%= ne.numero || '' %>"><% if (erros.numero) { %><div class="field-error"><%= erros.numero %></div><% } %></div>
+              <div class="form-group"><label for="ne-complemento">Complemento</label><input class="form-control" id="ne-complemento" name="complemento" aria-label="Complemento" value="<%= ne.complemento || '' %>"></div>
+              <div class="form-group"><label for="ne-bairro">Bairro</label><input class="form-control" id="ne-bairro" name="bairro" aria-label="Bairro" value="<%= ne.bairro || '' %>"><% if (erros.bairro) { %><div class="field-error"><%= erros.bairro %></div><% } %></div>
+              <div class="form-group"><label for="ne-cidade">Cidade</label><input class="form-control" id="ne-cidade" name="cidade" aria-label="Cidade" value="<%= ne.cidade || '' %>"><% if (erros.cidade) { %><div class="field-error"><%= erros.cidade %></div><% } %></div>
+              <div class="form-group"><label for="ne-uf">UF</label><input class="form-control" id="ne-uf" name="uf" aria-label="UF" maxlength="2" value="<%= ne.uf || '' %>"><% if (erros.uf) { %><div class="field-error"><%= erros.uf %></div><% } %></div>
             </div>
             <button class="btn btn-outline" type="submit" formaction="/checkout/endereco">Salvar endereço</button>
           </div>
         </details>
       </section>
 
-      <!-- Etapa 2: Frete -->
+      <!-- Etapa 2: Frete (derivado do endereço selecionado) -->
       <section class="card checkout-step">
         <h2>2. Frete</h2>
-        <div class="cep-row">
-          <input class="form-control" form="frete-form" name="cep" value="<%= cep %>" placeholder="Seu CEP (00000-000)">
-          <button class="btn btn-outline" type="submit" form="frete-form">Calcular</button>
-        </div>
-        <% if (frete) { %>
+        <% if (endereco && frete) { %>
+          <p class="muted" style="margin:0 0 .4rem">Entrega para <strong><%= endereco.cidade %>/<%= endereco.uf %></strong> · CEP <%= endereco.cep %></p>
           <div class="frete-result">
             <% if (frete.gratis) { %>
               <strong class="text-green">Frete grátis!</strong>
@@ -63,11 +60,11 @@
             <span class="muted">· <%= frete.regiao %> · entrega em até <%= frete.prazoDias %> dias úteis</span>
           </div>
         <% } else { %>
-          <p class="muted">Informe seu CEP para calcular o frete.</p>
+          <p class="muted">Selecione ou cadastre um endereço de entrega acima para calcular o frete.</p>
         <% } %>
       </section>
 
-      <!-- Etapa 3: Pagamento -->
+      <!-- Etapa 3: Pagamento (sandbox) -->
       <section class="card checkout-step">
         <h2>3. Pagamento <span class="badge-sandbox">sandbox</span></h2>
         <div class="pay-methods">
@@ -75,12 +72,13 @@
           <label class="pay-option"><input type="radio" name="metodo" value="cartao" <%= metodo === 'cartao' ? 'checked' : '' %>> <span>Cartão de crédito</span></label>
           <label class="pay-option"><input type="radio" name="metodo" value="boleto" <%= metodo === 'boleto' ? 'checked' : '' %>> <span>Boleto</span></label>
         </div>
-        <div class="card-fields">
+        <!-- Campos do cartão: visíveis só quando "Cartão" estiver marcado (JS em app.js) -->
+        <div class="card-fields" data-card-fields hidden>
           <p class="muted" style="font-size:.85rem">Dados de cartão são apenas para a simulação — nada é cobrado nem armazenado.</p>
           <div class="form-grid">
-            <div class="form-group span2"><label>Número do cartão</label><input class="form-control" name="cartao_numero" placeholder="4111 1111 1111 1111" inputmode="numeric"></div>
-            <div class="form-group"><label>Validade</label><input class="form-control" name="cartao_validade" placeholder="MM/AA"></div>
-            <div class="form-group"><label>CVV</label><input class="form-control" name="cartao_cvv" placeholder="123" inputmode="numeric"></div>
+            <div class="form-group span2"><label for="cc-num">Número do cartão</label><input class="form-control" id="cc-num" name="cartao_numero" placeholder="4111 1111 1111 1111" inputmode="numeric" autocomplete="off"></div>
+            <div class="form-group"><label for="cc-val">Validade</label><input class="form-control" id="cc-val" name="cartao_validade" placeholder="MM/AA"></div>
+            <div class="form-group"><label for="cc-cvv">CVV</label><input class="form-control" id="cc-cvv" name="cartao_cvv" placeholder="123" inputmode="numeric" autocomplete="off"></div>
           </div>
         </div>
       </section>
@@ -99,19 +97,20 @@
       <div class="summary-row"><span>Frete</span><span><%= frete ? (frete.gratis ? 'Grátis' : formatBRL(freteCents)) : '—' %></span></div>
       <div class="summary-row total"><span>Total</span><strong><%= formatBRL(totalCents) %></strong></div>
 
-      <button class="btn btn-primary btn-block" type="submit">Confirmar pedido</button>
+      <button class="btn btn-primary btn-block" type="submit" <%= (!endereco || !frete) ? 'disabled' : '' %>>Confirmar pedido</button>
+      <% if (!endereco) { %><p class="form-help text-center">Cadastre um endereço para concluir.</p><% } %>
       <a class="btn btn-ghost btn-block" href="/carrinho" style="margin-top:.3rem">Voltar ao carrinho</a>
     </aside>
   </div>
 </form>
 
-<!-- Form auxiliar do frete (o CEP usa o atributo form="frete-form") -->
-<form id="frete-form" action="/checkout/frete" method="post" hidden><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form>
+<!-- Form auxiliar para trocar o endereço selecionado (recalcula o frete) -->
+<form id="sel-form" action="/checkout/selecionar" method="post" hidden><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form>
 
 <!-- Cupom -->
 <form action="/checkout/cupom" method="post" class="cupom-form">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <input class="form-control" name="cupom" placeholder="Cupom de desconto" value="<%= cupom ? cupom.codigo : '' %>">
+  <input class="form-control" name="cupom" placeholder="Cupom de desconto" value="<%= cupom ? cupom.codigo : '' %>" aria-label="Cupom de desconto">
   <button class="btn btn-outline" type="submit">Aplicar</button>
 </form>
 

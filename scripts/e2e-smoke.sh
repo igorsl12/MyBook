@@ -38,16 +38,17 @@ RC=$(curl -s -b "$JAR" -c "$JAR" -o /dev/null -w '%{http_code}' \
 [ "$RC" = 302 ] && ok "adicionar ao carrinho" || no "adicionar ($RC)"
 curl -s -b "$JAR" "$BASE/carrinho" | grep -q 'Dom Casmurro' && ok "carrinho mostra o livro" || no "carrinho conteúdo"
 
-echo "== 4. Checkout =="
+echo "== 4. Checkout (frete derivado do endereço) =="
 TOK=$(curl -s -b "$JAR" -c "$JAR" "$BASE/checkout" | csrf)
-curl -s -b "$JAR" -c "$JAR" -o /dev/null --data-urlencode "_csrf=$TOK" --data-urlencode "cep=01310-100" "$BASE/checkout/frete"
+# Cadastra o endereço (vira o endereço de entrega; frete é calculado a partir dele)
 curl -s -b "$JAR" -c "$JAR" -o /dev/null \
   --data-urlencode "_csrf=$TOK" --data-urlencode "cep=01310-100" --data-urlencode "logradouro=Av. Paulista" \
   --data-urlencode "numero=1000" --data-urlencode "bairro=Bela Vista" --data-urlencode "cidade=São Paulo" \
   --data-urlencode "uf=SP" "$BASE/checkout/endereco"
-END_ID=$(curl -s -b "$JAR" "$BASE/checkout" | grep -o 'name="endereco_id" value="[0-9]*"' | head -1 | grep -o '[0-9]*')
+# confere que o frete apareceu no checkout
+curl -s -b "$JAR" "$BASE/checkout" | grep -qiE 'frete grátis|R\$' && ok "frete calculado do endereço" || no "frete do endereço"
 LOC=$(curl -s -b "$JAR" -c "$JAR" -D - -o /dev/null \
-  --data-urlencode "_csrf=$TOK" --data-urlencode "endereco_id=$END_ID" --data-urlencode "metodo=cartao" \
+  --data-urlencode "_csrf=$TOK" --data-urlencode "metodo=cartao" \
   --data-urlencode "cartao_numero=4111111111111111" --data-urlencode "cartao_validade=12/30" --data-urlencode "cartao_cvv=123" \
   "$BASE/checkout/finalizar" | grep -i '^location:' | tr -d '\r' | awk '{print $2}')
 echo "    → redirect: $LOC"
