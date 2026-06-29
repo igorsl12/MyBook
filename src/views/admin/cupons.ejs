@@ -18,7 +18,20 @@
             <td><%= c.tipo === 'percentual' ? '%' : 'R$' %></td>
             <td><%= c.tipo === 'percentual' ? Number(c.valor) + '%' : formatBRL(toCents(c.valor)) %></td>
             <td><%= formatBRL(toCents(c.valor_minimo)) %></td>
-            <td><%= c.usos %><%= c.uso_maximo ? '/' + c.uso_maximo : '' %></td>
+            <td>
+              <% if (c.uso_maximo) {
+                   var pct = Math.min(100, Math.round(c.usos / c.uso_maximo * 100));
+                   var cor = pct >= 80 ? 'uso-bar-critico' : pct >= 50 ? 'uso-bar-aviso' : 'uso-bar-ok';
+              %>
+                <div class="uso-wrap">
+                  <span class="uso-txt uso-pct-<%= cor %>"><%= pct %>%</span>
+                  <span class="uso-txt uso-detalhe"><%= c.usos %>/<%= c.uso_maximo %></span>
+                  <div class="uso-bar"><div class="uso-fill <%= cor %>" style="width:<%= pct %>%"></div></div>
+                </div>
+              <% } else { %>
+                <span class="uso-txt"><%= c.usos %> <span class="muted">/ ∞</span></span>
+              <% } %>
+            </td>
             <td><span class="badge badge-<%= c.ativo ? 'sucesso' : 'erro' %>"><%= c.ativo ? 'ativo' : 'inativo' %></span></td>
             <td>
               <form action="/admin/cupons/<%= c.id %>/alternar" method="post">
