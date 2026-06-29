@@ -28,6 +28,9 @@ export function createApp() {
   app.disable('x-powered-by');
 
   // Cabeçalhos de segurança (CSP compatível com Google Fonts e SVG/JSON-LD inline).
+  // Em produção (HTTPS real) forçamos upgrade-insecure-requests e HSTS; em dev
+  // (HTTP via porta encaminhada) eles são desligados para o navegador não tentar
+  // trocar http→https e falhar.
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
@@ -39,8 +42,11 @@ export function createApp() {
         formAction: ["'self'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
+        // null remove a diretiva padrão do helmet quando não estamos em produção.
+        ...(env.isProd ? {} : { upgradeInsecureRequests: null }),
       },
     },
+    hsts: env.isProd,
   }));
 
   // View engine (EJS) + diretório de views.
