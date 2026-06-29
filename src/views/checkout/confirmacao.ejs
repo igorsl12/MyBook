@@ -20,20 +20,32 @@
 <div class="confirm-layout">
   <section class="card">
     <h2>Pagamento <span class="badge-sandbox">sandbox</span></h2>
-    <% if (pag.metodo === 'pix') { %>
-      <p>Pague via <strong>PIX</strong> escaneando o QR abaixo (simulado):</p>
-      <div class="qr-box"><img alt="QR Code PIX (simulado)" src="data:image/svg+xml;base64,<%= Buffer.from(String(pag.qrSvg || '')).toString('base64') %>"></div>
-      <label class="form-help">PIX copia e cola:</label>
-      <input class="form-control" readonly value="<%= pag.copiaECola %>" data-select-on-click>
-      <p class="muted"><%= pag.instrucao %></p>
-    <% } else if (pag.metodo === 'boleto') { %>
-      <p>Boleto gerado (simulado). Vencimento: <strong><%= pag.vencimento %></strong></p>
-      <label class="form-help">Linha digitável:</label>
-      <input class="form-control" readonly value="<%= pag.linhaDigitavel %>" data-select-on-click>
-      <p class="muted"><%= pag.instrucao %></p>
-    <% } else if (pag.metodo === 'cartao') { %>
-      <p>Pagamento aprovado no <strong><%= pag.bandeira %></strong> final <strong><%= pag.ultimos4 %></strong> (simulado).</p>
-      <p class="muted">Autorização: <%= pag.autorizacao %></p>
+    <% if (pedido.status === 'pendente') { %>
+      <%# Pagamento ainda não confirmado — mostra instruções de pagamento %>
+      <% if (pag.metodo === 'pix') { %>
+        <p>Pague via <strong>PIX</strong> escaneando o QR abaixo (simulado):</p>
+        <div class="qr-box"><img alt="QR Code PIX (simulado)" src="data:image/svg+xml;base64,<%= Buffer.from(String(pag.qrSvg || '')).toString('base64') %>"></div>
+        <label class="form-help">PIX copia e cola:</label>
+        <input class="form-control" readonly value="<%= pag.copiaECola %>" data-select-on-click>
+        <p class="muted"><%= pag.instrucao %></p>
+      <% } else if (pag.metodo === 'boleto') { %>
+        <p>Boleto gerado (simulado). Vencimento: <strong><%= pag.vencimento %></strong></p>
+        <label class="form-help">Linha digitável:</label>
+        <input class="form-control" readonly value="<%= pag.linhaDigitavel %>" data-select-on-click>
+        <p class="muted"><%= pag.instrucao %></p>
+      <% } %>
+    <% } else { %>
+      <%# Pagamento já confirmado (pago, em separação, enviado, entregue…) — sem QR/boleto %>
+      <% if (pag.metodo === 'pix') { %>
+        <p><span class="badge badge-sucesso">PIX recebido ✓</span></p>
+        <p class="muted">Pagamento confirmado. O QR Code não é mais necessário.</p>
+      <% } else if (pag.metodo === 'boleto') { %>
+        <p><span class="badge badge-sucesso">Boleto compensado ✓</span></p>
+        <p class="muted">Pagamento confirmado.</p>
+      <% } else if (pag.metodo === 'cartao') { %>
+        <p>Pagamento aprovado no <strong><%= pag.bandeira %></strong> final <strong><%= pag.ultimos4 %></strong> (simulado).</p>
+        <p class="muted">Autorização: <%= pag.autorizacao %></p>
+      <% } %>
     <% } %>
   </section>
 
