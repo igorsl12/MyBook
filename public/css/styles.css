@@ -281,10 +281,15 @@ img { max-width: 100%; display: block; }
 .review-media img, .review-media video { width: 120px; height: 120px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #000; }
 .review-media a { line-height: 0; }
 
-.produto-actions { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
-.produto-actions li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .5rem 0; border-bottom: 1px solid var(--line); }
-.produto-actions li:last-child { border-bottom: none; }
-.produto-action-btns { display: flex; gap: .4rem; }
+.produto-actions { list-style: none; padding: 0; margin: 0; display: grid; gap: .25rem; }
+.produto-review-item { padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.produto-review-item:last-child { border-bottom: none; }
+.produto-review-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.review-inline { margin-top: .6rem; }
+.review-inline > summary { display: inline-flex; cursor: pointer; list-style: none; }
+.review-inline > summary::-webkit-details-marker { display: none; }
+.review-inline[open] > summary { margin-bottom: .75rem; }
+.review-inline .review-form { box-shadow: none; border: 1px solid var(--line); }
 
 @media (max-width: 900px) {
   .catalog-layout { grid-template-columns: 1fr; }

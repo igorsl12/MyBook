@@ -5,7 +5,7 @@ import * as Cart from '../repositories/cart.js';
 import * as Addresses from '../repositories/addresses.js';
 import * as Orders from '../repositories/orders.js';
 import * as Coupons from '../repositories/coupons.js';
-import { query } from '../db.js';
+import * as Reviews from '../repositories/reviews.js';
 import { calcularFrete } from '../services/shipping.js';
 import { processarPagamento, metodoValido } from '../services/payment.js';
 import {
@@ -169,13 +169,8 @@ checkoutRouter.get('/pedido/:id', asyncHandler(async (req, res) => {
   if (!dono && u.papel !== 'admin') {
     return res.status(403).render('errors/403', { titulo: 'Acesso negado' });
   }
-  // Quais itens o dono já avaliou (para mostrar "Avaliar"/"Avaliado").
-  let avaliados = new Set();
-  if (dono) {
-    const r = await query(
-      'SELECT livro_id FROM avaliacoes WHERE usuario_id = $1', [u.id]);
-    avaliados = new Set(r.rows.map((x) => x.livro_id));
-  }
+  // Quais itens DESTE pedido o dono já avaliou (para mostrar form vs "Avaliado").
+  const avaliados = dono ? await Reviews.avaliadosNoPedido(pedido.id) : new Set();
   res.render('checkout/confirmacao', {
     titulo: `Pedido #${pedido.id}`, pedido, dono, avaliados,
   });

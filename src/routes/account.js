@@ -26,17 +26,18 @@ const reviewLimiter = rateLimit({
   message: 'Muitas avaliações em pouco tempo. Tente novamente mais tarde.',
 });
 
-// Pré-autorização ANTES do multer: garante que o usuário comprou o livro antes
-// de qualquer arquivo ser gravado em disco (evita upload por quem não pode avaliar).
-const autorizarAvaliacao = asyncHandler(async (req, res, next) => {
-  const l = await query('SELECT id, slug FROM livros WHERE slug = $1', [req.params.slug]);
-  const livro = l.rows[0];
-  if (!livro) return res.status(404).render('errors/404', { titulo: 'Livro não encontrado' });
-  if (!await Reviews.podeAvaliar(req.session.usuario.id, livro.id)) {
-    req.flash('erro', 'Você só pode avaliar livros que comprou.');
-    return res.redirect(`/livro/${livro.slug}`);
+// Pré-autorização ANTES do multer: garante que o usuário pode avaliar ESTE item
+// DESTE pedido (pedido dele, entregue, item presente e ainda não avaliado) antes
+// de qualquer arquivo ser gravado em disco.
+const autorizarAvaliacaoPedido = asyncHandler(async (req, res, next) => {
+  const pedidoId = parseInt(req.params.pedidoId, 10);
+  const livroId = parseInt(req.params.livroId, 10);
+  if (!await Reviews.podeAvaliarItem(req.session.usuario.id, pedidoId, livroId)) {
+    req.flash('erro', 'Você não pode avaliar este item.');
+    return res.redirect(`/pedido/${pedidoId}`);
   }
-  req.livro = livro;
+  req.pedidoId = pedidoId;
+  req.livroId = livroId;
   next();
 });
 
@@ -60,11 +61,12 @@ accountRouter.get('/favoritos', requireAuth, asyncHandler(async (req, res) => {
   res.render('account/favoritos', { titulo: 'Meus favoritos', livros });
 }));
 
-// ---- Avaliações (form multipart com fotos/vídeos) ----
-// Ordem: rate-limit → autoriza (antes do multer) → multer → handler.
-accountRouter.post('/livro/:slug/avaliar', requireAuth, reviewLimiter, autorizarAvaliacao,
-  uploadReviewMedia, asyncHandler(async (req, res) => {
-    const livro = req.livro;
+// ---- Avaliação de um item DENTRO de um pedido (form multipart com mídia) ----
+// Ordem: rate-limit → autoriza o item do pedido (antes do multer) → multer → handler.
+accountRouter.post('/pedido/:pedidoId/avaliar/:livroId', requireAuth, reviewLimiter,
+  autorizarAvaliacaoPedido, uploadReviewMedia, asyncHandler(async (req, res) => {
+    const { pedidoId, livroId } = req;
+    const voltar = `/pedido/${pedidoId}`;
     const arquivos = req.files ?? [];
 
     // CSRF: o corpo multipart só existe aqui (após o multer); validamos o token
@@ -72,14 +74,14 @@ accountRouter.post('/livro/:slug/avaliar', requireAuth, reviewLimiter, autorizar
     if (!tokenValido(req, req.body?._csrf)) {
       removerArquivos(arquivos);
       req.flash('erro', 'Sessão expirada. Recarregue a página e tente novamente.');
-      return res.redirect(`/livro/${livro.slug}`);
+      return res.redirect(voltar);
     }
 
     const nota = parseInt(req.body.nota, 10);
     if (!(nota >= 1 && nota <= 5)) {
       removerArquivos(arquivos);
       req.flash('erro', 'Selecione uma nota de 1 a 5.');
-      return res.redirect(`/livro/${livro.slug}`);
+      return res.redirect(voltar);
     }
 
     // Defesa em profundidade: valida o conteúdo real (magic bytes); descarta o
@@ -92,7 +94,7 @@ accountRouter.post('/livro/:slug/avaliar', requireAuth, reviewLimiter, autorizar
     }
 
     const avaliacaoId = await Reviews.upsert(
-      req.session.usuario.id, livro.id, nota, req.body.comentario);
+      req.session.usuario.id, pedidoId, livroId, nota, req.body.comentario);
 
     // Substitui as mídias anteriores (apaga arquivos e registros antigos).
     const antigas = await Reviews.listarMidias(avaliacaoId);
@@ -106,7 +108,7 @@ accountRouter.post('/livro/:slug/avaliar', requireAuth, reviewLimiter, autorizar
 
     req.flash('sucesso',
       validas.length ? 'Avaliação registrada com mídia. Obrigado!' : 'Avaliação registrada. Obrigado!');
-    res.redirect(`/livro/${livro.slug}`);
+    res.redirect(voltar);
   }));
 
 // ---- Minha conta (dashboard) ----

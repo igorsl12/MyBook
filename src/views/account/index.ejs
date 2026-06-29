@@ -24,8 +24,8 @@
 
     <% if (pendentes.length) { %>
       <div class="alert alert-aviso">
-        Você tem <%= pendentes.length %> livro<%= pendentes.length === 1 ? '' : 's' %> para avaliar:
-        <% pendentes.forEach(function(l, i){ %><a href="/livro/<%= l.slug %>"><%= l.titulo %></a><%= i < pendentes.length - 1 ? ', ' : '' %><% }) %>.
+        Você tem <%= pendentes.length %> produto<%= pendentes.length === 1 ? '' : 's' %> para avaliar (pelos seus pedidos):
+        <% pendentes.forEach(function(l, i){ %><a href="/pedido/<%= l.pedido_id %>"><%= l.titulo %></a><%= i < pendentes.length - 1 ? ', ' : '' %><% }) %>.
       </div>
     <% } %>
 

@@ -3,7 +3,6 @@ import { asyncHandler } from '../lib/asyncHandler.js';
 import * as Books from '../repositories/books.js';
 import * as Categories from '../repositories/categories.js';
 import * as Authors from '../repositories/authors.js';
-import * as Reviews from '../repositories/reviews.js';
 
 export const catalogRouter = Router();
 
@@ -89,12 +88,8 @@ catalogRouter.get('/livro/:slug', asyncHandler(async (req, res) => {
   ]);
 
   let favoritado = false;
-  let podeAvaliar = false;
   if (req.session.usuario) {
-    [favoritado, podeAvaliar] = await Promise.all([
-      Books.isFavorito(req.session.usuario.id, livro.id),
-      Reviews.podeAvaliar(req.session.usuario.id, livro.id),
-    ]);
+    favoritado = await Books.isFavorito(req.session.usuario.id, livro.id);
   }
 
   res.render('catalog/book', {
@@ -106,6 +101,5 @@ catalogRouter.get('/livro/:slug', asyncHandler(async (req, res) => {
     relacionados,
     avaliacoes,
     favoritado,
-    podeAvaliar,
   });
 }));

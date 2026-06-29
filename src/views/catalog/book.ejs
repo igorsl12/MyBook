@@ -100,31 +100,8 @@
 <section class="section" id="avaliar">
   <h2>Avaliações</h2>
 
-  <% if (typeof podeAvaliar !== 'undefined' && podeAvaliar) { %>
-    <form class="card review-form" action="/livro/<%= livro.slug %>/avaliar" method="post" enctype="multipart/form-data">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <h3>Avalie este livro</h3>
-      <div class="form-group">
-        <label for="nota">Sua nota</label>
-        <select class="form-control" id="nota" name="nota" style="max-width:120px">
-          <% for (let n = 5; n >= 1; n--) { %><option value="<%= n %>"><%= n %> ★</option><% } %>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="comentario">Comentário (opcional)</label>
-        <textarea class="form-control" id="comentario" name="comentario" rows="3"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="midias">Fotos e vídeos (opcional)</label>
-        <input class="form-control" id="midias" type="file" name="midias" accept="image/*,video/*" multiple>
-        <span class="form-help">Até 5 arquivos (imagens ou vídeos), 20&nbsp;MB cada.</span>
-      </div>
-      <button class="btn btn-primary" type="submit">Enviar avaliação</button>
-    </form>
-  <% } %>
-
   <% if (avaliacoes.length === 0) { %>
-    <p class="muted">Este livro ainda não tem avaliações. Compre e seja o primeiro a avaliar.</p>
+    <p class="muted">Este livro ainda não tem avaliações. Avalie pelos <strong>seus pedidos</strong> após receber o produto.</p>
   <% } else { %>
     <ul class="reviews">
       <% avaliacoes.forEach(function(av){ %>

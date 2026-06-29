@@ -206,16 +206,20 @@ CREATE INDEX idx_itens_pedido_pedido ON itens_pedido(pedido_id);
 -- ---------------------------------------------------------------------------
 -- Avaliações e favoritos
 -- ---------------------------------------------------------------------------
+-- Avaliação vinculada ao PEDIDO: o cliente avalia o item daquele pedido
+-- específico (uma avaliação por livro por pedido).
 CREATE TABLE avaliacoes (
   id          SERIAL PRIMARY KEY,
+  pedido_id   INTEGER NOT NULL REFERENCES pedidos(id)  ON DELETE CASCADE,
   livro_id    INTEGER NOT NULL REFERENCES livros(id)   ON DELETE CASCADE,
   usuario_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
   nota        INTEGER NOT NULL CHECK (nota BETWEEN 1 AND 5),
   comentario  TEXT,
   criado_em   TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (livro_id, usuario_id)
+  UNIQUE (pedido_id, livro_id)
 );
-CREATE INDEX idx_avaliacoes_livro ON avaliacoes(livro_id);
+CREATE INDEX idx_avaliacoes_livro  ON avaliacoes(livro_id);
+CREATE INDEX idx_avaliacoes_pedido ON avaliacoes(pedido_id);
 
 -- Mídias (fotos/vídeos) anexadas a uma avaliação.
 CREATE TABLE avaliacao_midias (
