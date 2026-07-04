@@ -1,0 +1,50 @@
+# Blueprint do Render — deploy do MyBook como container Docker no plano gratuito.
+# Banco de dados: Postgres gerenciado externo (Neon). Este blueprint NÃO cria o
+# banco; você provisiona o Neon separadamente e informa as credenciais DB_* abaixo.
+#
+# Como usar:
+#   1. Suba este repositório no GitHub.
+#   2. No Render: New > Blueprint > selecione o repo. Ele lê este arquivo.
+#   3. Preencha as variáveis marcadas como "sync: false" (as secretas).
+#   Passo a passo completo em docs/DEPLOY.md.
+
+services:
+  - type: web
+    name: mybook
+    runtime: docker
+    plan: free                 # 750h/mês, hiberna após 15min (cold start ~1min)
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true           # redeploy a cada push na branch conectada
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"          # casa com EXPOSE 3000 do Dockerfile
+      - key: FORCE_HTTPS
+        value: "true"          # Render serve atrás de HTTPS → liga HSTS
+      - key: DB_SSL
+        value: "true"          # Neon exige TLS na conexão
+      - key: DB_PORT
+        value: "5432"
+      # SESSION_SECRET: gerado automaticamente pelo Render (aleatório, persistente).
+      - key: SESSION_SECRET
+        generateValue: true
+      # --- Segredos/credenciais: preencha no dashboard do Render ---
+      # ENCRYPTION_KEY: gere com `openssl rand -hex 32` e GUARDE — é o que
+      # descriptografa o CPF dos usuários. Se mudar, os dados viram lixo.
+      - key: ENCRYPTION_KEY
+        sync: false
+      # Credenciais do Neon (extraídas da connection string — ver docs/DEPLOY.md).
+      - key: DB_HOST
+        sync: false            # ex.: ep-xxx-pooler.sa-east-1.aws.neon.tech
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      # URL pública canônica (opcional, evita host header injection no sitemap).
+      # Preencha depois com a URL final .onrender.com do serviço.
+      - key: SITE_URL
+        sync: false

@@ -1,0 +1,58 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titling}
+
+\setlength{\droptitle}{-3em}
+\title{\vspace{-1cm}Fase 1 --- Estruturação do Sistema}
+\author{Projeto MyBook --- E-commerce de Livros}
+\date{Julho de 2026}
+
+\begin{document}
+
+\maketitle
+\vspace{-1.5em}
+
+\section*{1. Tecnologias utilizadas}
+
+Aplicação web com renderização no servidor (SSR).
+
+\begin{itemize}[nosep]
+    \item \textbf{Node.js 20} + \textbf{Express 4} --- servidor e rotas
+    \item \textbf{EJS} --- páginas renderizadas no servidor
+    \item \textbf{PostgreSQL 16} --- banco de dados
+    \item \textbf{Docker + Docker Compose} --- containerização
+    \item Segurança: \texttt{bcrypt} (senhas), CSRF, AES-256-GCM (CPF), \texttt{helmet}, rate-limit
+\end{itemize}
+
+\section*{2. Hospedagem}
+
+Sistema \textbf{containerizado com Docker} --- roda em qualquer ambiente com Docker.
+
+\begin{itemize}[nosep]
+    \item \textbf{Desenvolvimento:} local em \texttt{http://localhost:3000}
+    \item \textbf{Produção:} VPS ou nuvem, com HTTPS via proxy TLS e usuário não-root
+\end{itemize}
+
+\section*{3. IA --- local ou API externa?}
+
+\textbf{O produto não usa IA.} Pagamento em modo sandbox e capas geradas como SVG offline.
+
+A única IA é uma \textbf{API externa} (Claude Code / Anthropic), usada só como ferramenta
+de desenvolvimento --- \textbf{não há modelo local}.
+
+\section*{4. Ambiente de desenvolvimento}
+
+\begin{itemize}[nosep]
+    \item \textbf{IDE:} VS Code + extensão Dev Containers
+    \item \textbf{Virtualização:} contêineres Docker (não VMs), base \texttt{node:20-bookworm}
+    \item \textbf{Banco:} PostgreSQL 16 integrado ao contêiner (porta 5432)
+    \item \textbf{Ferramentas:} Git, GitHub CLI, DBeaver/pgAdmin
+    \item \textbf{Host:} Windows 10
+\end{itemize}
+
+\end{document}
