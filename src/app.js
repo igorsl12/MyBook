@@ -89,14 +89,31 @@ export function createApp() {
   app.use(locals);
   app.use(navCategorias);
 
-  // Healthcheck (mantido p/ Docker/orquestrador).
+  // Liveness: prova apenas que o processo HTTP está de pé. NÃO depende do banco,
+  // porque é o endpoint que o Render usa em healthCheckPath — se ele falhasse a
+  // cada piscada do Postgres gerenciado (que auto-suspende no plano free), o
+  // Render tiraria a instância de rotação e o app ficaria intermitente.
+  // O status do banco vai no corpo (informativo), mas sempre respondemos 200.
   app.get('/health', async (_req, res) => {
+    let database = 'connected';
     try {
       await checkConnection();
-      res.json({ status: 'healthy', database: 'connected' });
     } catch (err) {
-      console.error('Healthcheck falhou:', err.message);
-      res.status(503).json({ status: 'unhealthy', database: 'unreachable' });
+      database = 'unreachable';
+      console.error('Healthcheck: banco inacessível no momento:', err.message);
+    }
+    res.json({ status: 'healthy', database });
+  });
+
+  // Readiness: falha (503) se o banco não responde. Use para monitoramento
+  // ativo/diagnóstico — não é o endpoint de liveness do Render.
+  app.get('/health/ready', async (_req, res) => {
+    try {
+      await checkConnection();
+      res.json({ status: 'ready', database: 'connected' });
+    } catch (err) {
+      console.error('Readiness falhou:', err.message);
+      res.status(503).json({ status: 'not-ready', database: 'unreachable' });
     }
   });
 

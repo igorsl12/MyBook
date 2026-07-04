@@ -1,0 +1,336 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage[breaklinks=true, hypertexnames=false]{hyperref}
+\usepackage{xurl}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\geometry{margin=2.5cm}
+\setstretch{1.3}
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+\title{Estruturação do Sistema MyBook --- E-commerce de Livros}
+\author{Iago Lima}
+\date{Julho de 2026}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    % SUBSTITUIR pelo arquivo real da logo, se disponível
+    \includegraphics[width=0.35\textwidth]{logo_iff.png}\\[0.5cm]
+    {\LARGE \textbf{Instituto Federal de Educação, Ciência e Tecnologia Fluminense} \\
+    \vspace{0.5cm}
+    \Large Campus Bom Jesus do Itabapoana}\\[3cm]
+    {\huge \textbf{Estruturação do Sistema MyBook\\[0.3cm] E-commerce de Livros}}\\[1.5cm]
+    {\large Relatório Técnico --- Fase 1: Estruturação do Sistema}\\[4.5cm]
+    {\large \textbf{Aluno:} Iago Lima \\[0.3cm]
+    \textbf{Disciplina:} Projeto de Sistemas de Software \\[0.3cm]
+    \textbf{Professor:} [NOME DO PROFESSOR]\\[0.3cm]
+    \textbf{Data:} Julho de 2026}\\[2cm]
+    \vfill
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introdução}
+
+O presente relatório documenta a primeira fase do desenvolvimento do sistema
+\textbf{MyBook}, um e-commerce de livros voltado ao mercado brasileiro. Nesta fase,
+denominada \emph{estruturação do sistema}, foram tomadas as decisões arquiteturais
+fundamentais que orientam todo o restante do projeto: a seleção das tecnologias de
+implementação, a definição do modelo de hospedagem, o posicionamento quanto ao uso de
+Inteligência Artificial (IA) e a caracterização do ambiente de desenvolvimento.
+
+Um e-commerce é uma aplicação de missão crítica que manipula dados sensíveis de
+clientes (identificação, endereços e informações de pagamento) e realiza transações
+financeiras. Por essa razão, as escolhas estruturais não podem ser arbitrárias:
+devem privilegiar segurança, reprodutibilidade do ambiente, portabilidade entre
+máquinas e clareza de manutenção. A estruturação adequada nesta fase reduz o custo de
+correções futuras e estabelece as fronteiras de responsabilidade de cada componente.
+
+O sistema MyBook adota uma arquitetura \emph{monolítica modular} com renderização no
+lado do servidor (\emph{Server-Side Rendering}, SSR). A aplicação é organizada em
+camadas de responsabilidade única --- repositórios de acesso a dados, serviços de
+regra de negócio, rotas de controle e \emph{views} de apresentação --- o que favorece
+a coesão interna e o baixo acoplamento entre módulos. Todo o ambiente é
+\emph{containerizado} com Docker, garantindo que a aplicação se comporte de forma
+idêntica em qualquer máquina, do computador de desenvolvimento ao servidor de produção.
+
+Este documento está organizado de modo a responder objetivamente às quatro questões
+norteadoras da fase de estruturação, apresentando não apenas as decisões tomadas, mas
+também a justificativa técnica de cada uma delas.
+
+\section{Objetivos}
+
+\begin{itemize}[leftmargin=2em]
+    \item Definir o conjunto de tecnologias (linguagens, frameworks e bibliotecas)
+    utilizadas na implementação do sistema.
+    \item Especificar o modelo de hospedagem da aplicação, contemplando ambiente de
+    desenvolvimento e de produção.
+    \item Determinar o posicionamento do projeto quanto ao uso de Inteligência
+    Artificial, definindo se seria empregado modelo local ou API externa.
+    \item Caracterizar o ambiente de desenvolvimento, incluindo IDE, contêineres de
+    isolamento, banco de dados e ferramentas auxiliares.
+\end{itemize}
+
+\section{Metodologia}
+
+\subsection{Materiais Utilizados}
+
+Foram utilizados, na estruturação e implementação do sistema, os seguintes recursos de
+software e infraestrutura:
+
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Node.js} (versão $\geq$ 20 LTS) --- ambiente de execução JavaScript
+    no servidor.
+    \item \textbf{Express} 4.x --- framework web para roteamento e \emph{middlewares}.
+    \item \textbf{EJS} 6.x --- \emph{template engine} para renderização de páginas no
+    servidor (SSR).
+    \item \textbf{PostgreSQL} 16 (imagem \texttt{postgres:16-alpine}) --- sistema
+    gerenciador de banco de dados relacional.
+    \item \textbf{Docker} e \textbf{Docker Compose} v2 --- containerização e
+    orquestração dos serviços.
+    \item \textbf{Visual Studio Code} com a extensão \emph{Dev Containers} --- ambiente
+    de desenvolvimento integrado.
+    \item Bibliotecas de apoio: \texttt{pg} (\emph{driver} PostgreSQL),
+    \texttt{bcryptjs} (\emph{hash} de senhas), \texttt{express-session} e
+    \texttt{connect-pg-simple} (sessões persistidas), \texttt{helmet} (cabeçalhos de
+    segurança), \texttt{express-rate-limit} (limitação de requisições) e
+    \texttt{multer} (\emph{upload} de arquivos).
+    \item Ferramentas auxiliares: Git (controle de versão), GitHub CLI, e cliente de
+    banco DBeaver/pgAdmin para inspeção do PostgreSQL.
+\end{itemize}
+
+\subsection{Procedimento Experimental}
+
+A estruturação do sistema seguiu as etapas descritas a seguir:
+
+\begin{enumerate}[leftmargin=2em]
+    \item Levantou-se o requisito central do projeto: um e-commerce de livros para o
+    contexto brasileiro, com catálogo, carrinho, \emph{checkout}, cálculo de frete por
+    CEP e pagamento em modo \emph{sandbox}.
+    \item Selecionou-se o conjunto de tecnologias com base em maturidade, curva de
+    aprendizado e adequação a uma aplicação SSR com banco relacional.
+    \item Definiu-se a arquitetura em camadas (repositórios, serviços, rotas,
+    \emph{middlewares} e \emph{views}), organizando o código por domínio.
+    \item Elaborou-se o \texttt{Dockerfile} multiestágio e o arquivo
+    \texttt{docker-compose.yml}, containerizando a aplicação e o banco de dados.
+    \item Configurou-se um \emph{dev container} isolado para o ambiente de
+    desenvolvimento, com PostgreSQL integrado e ferramentas pré-instaladas.
+    \item Estabeleceu-se a política de segurança e de gestão de segredos, centralizando
+    todas as credenciais em variáveis de ambiente (\texttt{.env}).
+    \item Avaliou-se a necessidade de recursos de Inteligência Artificial no produto,
+    concluindo-se pela sua não incorporação em tempo de execução.
+\end{enumerate}
+
+\section{Resultados e Discussão}
+
+\subsection{Tecnologias Utilizadas}
+
+O sistema foi implementado sobre a plataforma \textbf{Node.js}, com o framework
+\textbf{Express} para a camada web e \textbf{PostgreSQL} como banco de dados
+relacional. A escolha por renderização no servidor com \textbf{EJS} dispensa a
+complexidade de um \emph{framework} de \emph{frontend} dedicado, entregando páginas
+HTML já prontas ao navegador --- decisão coerente com o princípio KISS (\emph{Keep It
+Simple}) e favorável ao SEO. A Tabela~\ref{tab:stack} sintetiza a pilha tecnológica
+adotada.
+
+\begin{table}[H]
+    \centering
+    \caption{Pilha tecnológica do sistema MyBook.}
+    \label{tab:stack}
+    \begin{tabular}{lll}
+        \toprule
+        \textbf{Camada} & \textbf{Tecnologia} & \textbf{Função} \\
+        \midrule
+        Runtime          & Node.js $\geq$ 20      & Execução de JavaScript no servidor \\
+        Framework web    & Express 4.x            & Roteamento e \emph{middlewares} \\
+        Apresentação     & EJS 6.x (SSR)          & Renderização de páginas no servidor \\
+        Banco de dados   & PostgreSQL 16          & Persistência relacional \\
+        Acesso a dados   & \texttt{pg} 8.x        & \emph{Driver} de conexão \\
+        Autenticação     & \texttt{bcryptjs}      & \emph{Hash} de senhas \\
+        Sessão           & express-session + PG   & Sessões persistidas no banco \\
+        Segurança        & helmet, rate-limit     & Cabeçalhos e limitação de requisições \\
+        \emph{Upload}    & multer                 & Recebimento de mídias \\
+        Containerização  & Docker + Compose       & Empacotamento e orquestração \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Adicionalmente, dados sensíveis como o CPF do cliente são protegidos em repouso por
+criptografia simétrica \textbf{AES-256-GCM}, e todos os formulários que alteram estado
+são protegidos contra CSRF (\emph{Cross-Site Request Forgery}). As senhas nunca são
+armazenadas em texto claro, sendo submetidas à função de \emph{hash} \texttt{bcrypt}.
+
+\subsection{Hospedagem do Sistema}
+
+O sistema foi projetado para ser \textbf{totalmente containerizado}, o que torna a
+hospedagem independente do provedor. A aplicação e o banco de dados são descritos como
+serviços no \texttt{docker-compose.yml} e podem ser executados em qualquer ambiente que
+disponha de Docker: máquina local, servidor virtual privado (VPS) ou provedor de nuvem.
+
+Em \textbf{desenvolvimento}, o sistema roda localmente em \texttt{http://localhost:3000}.
+Em \textbf{produção}, a aplicação é executada por um usuário não-\emph{root} dentro do
+contêiner, posicionada atrás de um \emph{proxy} reverso ou balanceador de carga
+responsável pela terminação TLS (HTTPS), habilitada pela variável
+\texttt{FORCE\_HTTPS=true}. A Tabela~\ref{tab:hosting} resume a configuração de
+hospedagem por ambiente.
+
+\begin{table}[H]
+    \centering
+    \caption{Configuração de hospedagem por ambiente.}
+    \label{tab:hosting}
+    \begin{tabular}{lll}
+        \toprule
+        \textbf{Aspecto} & \textbf{Desenvolvimento} & \textbf{Produção} \\
+        \midrule
+        Execução       & Docker Compose local        & Docker (VPS/nuvem) \\
+        Endereço       & \texttt{localhost:3000}     & Domínio atrás de \emph{proxy} TLS \\
+        Protocolo      & HTTP                        & HTTPS (\texttt{FORCE\_HTTPS=true}) \\
+        Banco          & \texttt{postgres:16-alpine} & PostgreSQL 16 gerenciado/contêiner \\
+        Usuário        & \texttt{node} (não-root)    & \texttt{node} (não-root) \\
+        \emph{Healthcheck} & Endpoint \texttt{/health} & Endpoint \texttt{/health} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+O contêiner da aplicação possui \emph{healthcheck} próprio, que verifica
+periodicamente o endpoint \texttt{/health}, permitindo que o orquestrador reinicie o
+serviço automaticamente em caso de falha. As credenciais de banco e o segredo de
+sessão são injetados exclusivamente por variáveis de ambiente, nunca ficando
+codificadas no repositório.
+
+\subsection{Inteligência Artificial: Modelo Local ou API Externa}
+
+Após avaliação, decidiu-se que o \textbf{produto MyBook não incorpora Inteligência
+Artificial em tempo de execução}. Todas as funcionalidades sensíveis são resolvidas por
+lógica determinística e verificável, o que aumenta a previsibilidade e a auditabilidade
+do sistema. Em particular:
+
+\begin{itemize}[leftmargin=2em]
+    \item O pagamento opera em modo \emph{sandbox/mock}, com os pontos de integração
+    real isolados para substituição futura por um \emph{gateway} de pagamento.
+    \item As capas de livros sem imagem cadastrada são geradas como \textbf{SVG no
+    servidor}, de forma offline e sem qualquer dependência de serviços de geração de
+    imagem por IA.
+\end{itemize}
+
+O único uso de IA no projeto ocorre no \textbf{fluxo de desenvolvimento}, e não no
+produto: adota-se o assistente \textbf{Claude Code} (Anthropic), que opera via
+\textbf{API externa}. Portanto, quanto à questão norteadora, registra-se que
+\emph{não há modelo de IA local}; a única IA envolvida é uma \textbf{API externa}
+empregada como ferramenta de apoio à programação, executada dentro de um contêiner
+isolado (ver Seção~\ref{sec:devenv}), sem acesso a dados de produção. Essa separação
+garante que a ausência de IA no produto seja uma decisão de arquitetura, e não uma
+limitação circunstancial.
+
+\subsection{Ambiente de Desenvolvimento}
+\label{sec:devenv}
+
+O ambiente de desenvolvimento foi padronizado por meio de um \textbf{Dev Container},
+recurso do Visual Studio Code que descreve, em código, toda a configuração da máquina de
+trabalho. Isso assegura que qualquer desenvolvedor obtenha um ambiente idêntico,
+eliminando o clássico problema do ``na minha máquina funciona''. A
+Tabela~\ref{tab:devenv} detalha os componentes do ambiente.
+
+\begin{table}[H]
+    \centering
+    \caption{Componentes do ambiente de desenvolvimento.}
+    \label{tab:devenv}
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Componente} & \textbf{Descrição} \\
+        \midrule
+        IDE                & Visual Studio Code + extensão \emph{Dev Containers} \\
+        Contêiner base     & \texttt{node:20-bookworm} \\
+        Isolamento         & \emph{Dev container} (acesso restrito a \texttt{/workspace}) \\
+        Banco integrado    & PostgreSQL 16 (\emph{host} \texttt{db}, porta 5432) \\
+        Controle de versão & Git + GitHub CLI \\
+        Assistente de IA   & Claude Code CLI (API externa, uso isolado) \\
+        Cliente de banco   & DBeaver/pgAdmin em \texttt{localhost:5432} \\
+        Sistema \emph{host}& Windows 10 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+O \emph{dev container} sobe automaticamente um \textbf{PostgreSQL 16} associado, de modo
+que a aplicação se conecta ao banco sem configuração adicional --- as variáveis
+\texttt{DB\_HOST}, \texttt{DB\_USER}, \texttt{DB\_PASSWORD} e \texttt{DB\_NAME} já chegam
+prontas ao ambiente. Os \emph{scripts} SQL de \texttt{db/init/} (esquema e \emph{seed})
+são executados na primeira criação do banco, deixando-o pronto para uso.
+
+O isolamento proporcionado pelo contêiner é o que torna seguro executar o assistente de
+IA em modo de permissões liberadas (\emph{bypass}): como o Claude só enxerga a pasta
+\texttt{/workspace} e os dados residem em volumes Docker dedicados, não há risco ao
+sistema de arquivos do \emph{host}. As senhas empregadas no ambiente de desenvolvimento
+são \emph{defaults} explicitamente marcados como não reutilizáveis em produção.
+
+\subsection{Discussão Geral}
+
+As decisões estruturais apresentadas convergem para três princípios: \textbf{segurança
+por padrão} (segredos em variáveis de ambiente, \emph{hash} de senhas, criptografia de
+dados sensíveis, proteção CSRF e limitação de requisições), \textbf{reprodutibilidade}
+(containerização integral e ambiente de desenvolvimento descrito em código) e
+\textbf{simplicidade} (arquitetura monolítica modular com SSR, evitando complexidade
+prematura). A opção por não embarcar IA no produto reforça a auditabilidade das regras de
+negócio, mantendo o comportamento do sistema determinístico e testável.
+
+\section{Conclusão}
+
+A fase de estruturação do sistema MyBook cumpriu integralmente os objetivos propostos.
+Definiu-se a pilha tecnológica --- \textbf{Node.js, Express, EJS e PostgreSQL 16} ---,
+sustentada por uma arquitetura monolítica modular em camadas e reforçada por bibliotecas
+consolidadas de segurança e persistência.
+
+Quanto à hospedagem, o sistema foi projetado de forma \textbf{containerizada com Docker},
+tornando-o portável entre a máquina de desenvolvimento e qualquer servidor de produção,
+com HTTPS provido por \emph{proxy} TLS e execução sob usuário não-\emph{root}. No tocante
+à Inteligência Artificial, concluiu-se que \textbf{o produto não utiliza IA em tempo de
+execução}; a única IA presente é uma \textbf{API externa} (Claude Code) empregada apenas
+como ferramenta de apoio ao desenvolvimento, isolada em contêiner --- não havendo,
+portanto, modelo local.
+
+Por fim, o ambiente de desenvolvimento foi padronizado por meio de um \emph{Dev
+Container} no Visual Studio Code, com PostgreSQL 16 integrado e ferramentas
+pré-configuradas, garantindo reprodutibilidade e isolamento. Como limitação, registra-se
+que o pagamento permanece em modo \emph{sandbox}, cabendo às fases seguintes a integração
+com um \emph{gateway} real e a configuração da infraestrutura de produção (domínio,
+certificado TLS e monitoramento). As bases estabelecidas nesta fase, contudo, tornam
+essas evoluções incrementais e de baixo risco.
+
+\begin{thebibliography}{99}
+
+\bibitem{nodejs}
+OPENJS FOUNDATION. \textbf{Node.js Documentation}. Disponível em:
+\url{https://nodejs.org/docs}. Acesso em: jul. 2026.
+
+\bibitem{express}
+OPENJS FOUNDATION. \textbf{Express --- Fast, unopinionated, minimalist web framework for
+Node.js}. Disponível em: \url{https://expressjs.com}. Acesso em: jul. 2026.
+
+\bibitem{postgres}
+THE POSTGRESQL GLOBAL DEVELOPMENT GROUP. \textbf{PostgreSQL 16 Documentation}. Disponível
+em: \url{https://www.postgresql.org/docs/16/}. Acesso em: jul. 2026.
+
+\bibitem{docker}
+DOCKER INC. \textbf{Docker Documentation}. Disponível em:
+\url{https://docs.docker.com}. Acesso em: jul. 2026.
+
+\bibitem{owasp}
+OWASP FOUNDATION. \textbf{OWASP Top 10 --- Web Application Security Risks}. Disponível em:
+\url{https://owasp.org/www-project-top-ten/}. Acesso em: jul. 2026.
+
+\end{thebibliography}
+
+\end{document}
