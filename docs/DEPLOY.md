@@ -54,11 +54,17 @@ Rode os SQLs de `db/init/` contra o Neon. Use a connection string **completa**
 ```bash
 psql "postgresql://USUARIO:SENHA@ep-xxxx-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require" \
   -f db/init/001_schema.sql \
-  -f db/init/002_seed.sql
+  -f db/init/002_seed.sql \
+  -f db/init/003_mais_livros.sql
 ```
 
-> Sem `psql`? Abra `db/init/001_schema.sql` e depois `002_seed.sql`, cole o
-> conteúdo no **SQL Editor** do Neon e execute (nessa ordem).
+> Sem `psql`? Abra `db/init/001_schema.sql`, depois `002_seed.sql` e por fim
+> `003_mais_livros.sql`, cole o conteúdo no **SQL Editor** do Neon e execute
+> (nessa ordem).
+
+> O `003_mais_livros.sql` é **idempotente** (`ON CONFLICT DO NOTHING`): se o banco
+> já estiver no ar com os livros anteriores, rode só ele para adicionar os +30
+> novos, sem recriar nada.
 
 ---
 
